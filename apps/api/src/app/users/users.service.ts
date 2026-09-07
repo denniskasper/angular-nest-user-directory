@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { fullName, User, UserPage, USERS_PAGE_SIZE } from '@pdr-cloud/shared';
+import { ListUsersQuery } from './list-users-query';
 import { UsersRepository } from './users.repository';
 
 @Injectable()
@@ -15,7 +16,7 @@ export class UsersService {
    * The search narrows first and the page is cut from the matches, so
    * `total` counts matches rather than the whole directory.
    */
-  async findPage(page: number, search = ''): Promise<UserPage> {
+  async findPage({ page = 1, search = '' }: ListUsersQuery): Promise<UserPage> {
     const term = search.toLowerCase();
     const matches = (await this.users.findAll()).filter((user) =>
       fullName(user).toLowerCase().includes(term),

@@ -18,7 +18,7 @@ export class UsersController {
     if (query.page === undefined && query.search === undefined) {
       return this.users.findAll();
     }
-    return this.users.findPage(query.page ?? 1, query.search);
+    return this.users.findPage(query);
   }
 
   /** A single User by id; an id that is not a number is rejected, not treated as absent. */

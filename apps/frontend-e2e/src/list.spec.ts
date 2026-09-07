@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { presentation } from './presentation';
 
 /**
  * Seam 3 (spec.md, Testing Decisions): the browser. Covers ticket 03 — the
@@ -7,26 +8,6 @@ import { test, expect, Page } from '@playwright/test';
  * presentation switch itself: stacked on phones, tabular from tablet width
  * upward.
  */
-
-/** Whichever presentation the current viewport shows. */
-function presentation(page: Page) {
-  const phone = test.info().project.name === 'phone';
-  return {
-    phone,
-    shown: phone
-      ? page.getByRole('list', { name: 'Users' })
-      : page.getByRole('table', { name: 'Users' }),
-    hidden: phone
-      ? page.getByRole('table', { name: 'Users' })
-      : page.getByRole('list', { name: 'Users' }),
-    entries: phone
-      ? page.getByRole('list', { name: 'Users' }).getByRole('listitem')
-      : page
-          .getByRole('table', { name: 'Users' })
-          .locator('tbody')
-          .getByRole('row'),
-  };
-}
 
 test.describe('user list', () => {
   test('shows the stacked presentation on phones and the table on desktops', async ({

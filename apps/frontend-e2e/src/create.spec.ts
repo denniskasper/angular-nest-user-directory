@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { createUserForm, snackBar } from './create-user-form';
 import { presentation } from './presentation';
 
 /**
@@ -19,15 +20,15 @@ test.describe('create a User', () => {
       .click();
     await expect(page).toHaveURL(/\/users\/new$/);
     const { phone, entries } = presentation(page);
-    const form = page.getByRole('form', { name: 'Add a User' });
+    const { form, field, chooseRole } = createUserForm(page);
     const firstName = form.getByLabel('First name');
     const lastName = form.getByLabel('Last name');
     const add = form.getByRole('button', { name: 'Add User' });
 
     // Single column and full width on phones; two columns from tablet up.
     const viewport = page.viewportSize();
-    const first = await firstName.boundingBox();
-    const last = await lastName.boundingBox();
+    const first = await field('First name').boundingBox();
+    const last = await field('Last name').boundingBox();
     if (!viewport || !first || !last)
       throw new Error('the fields must have boxes');
     if (phone) {
@@ -61,7 +62,7 @@ test.describe('create a User', () => {
     await form.getByLabel('Email').fill('not-an-email');
     await form.getByLabel('Phone number').fill('+44 20 7946 0958');
     await form.getByLabel('Birth date').fill('1815-12-10');
-    await form.getByRole('radio', { name: 'Editor' }).check();
+    await chooseRole('Editor');
     await add.click();
     await expect(form.getByText('Enter an email address')).toBeVisible();
     expect(posts).toEqual([]);
@@ -70,9 +71,7 @@ test.describe('create a User', () => {
     // A failure is reported clearly, and the form stays as it was.
     await page.route('**/api/users', (route) => route.abort('failed'));
     await add.click();
-    await expect(page.getByRole('alert')).toContainText(
-      'The User could not be added',
-    );
+    await expect(snackBar(page)).toContainText('The User could not be added');
     await expect(page).toHaveURL(/\/users\/new$/);
     await expect(firstName).toHaveValue('Ada');
     await page.unroute('**/api/users');
@@ -88,7 +87,7 @@ test.describe('create a User', () => {
     expect(id).toBeGreaterThan(100);
 
     await expect(page).toHaveURL(/\/\?search=Ada(\+|%20)Lovelace$/);
-    await expect(page.getByRole('status')).toContainText(
+    await expect(snackBar(page)).toContainText(
       `Ada Lovelace was added as User #${id}`,
     );
     const ada = entries.filter({

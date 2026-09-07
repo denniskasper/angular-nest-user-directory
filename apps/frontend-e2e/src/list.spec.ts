@@ -122,8 +122,11 @@ test.describe('user list', () => {
       expect(box).toEqual({ x: 0, y: 0, ...layout });
     } else {
       // Centred over the content column, which is what the eye measures
-      // against; the column itself sits inside the reserved scrollbar gutter.
-      const column = await page.getByRole('main').boundingBox();
+      // against; the column itself sits inside the reserved scrollbar gutter,
+      // and is hidden from assistive technology while the dialog is open.
+      const column = await page
+        .getByRole('main', { includeHidden: true })
+        .boundingBox();
       if (!column) throw new Error('the content column must have a box');
       expect(box.width).toBeLessThan(layout.width);
       expect(box.x).toBeGreaterThan(0);

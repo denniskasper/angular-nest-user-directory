@@ -248,6 +248,19 @@ Data, Legacy Record, Normalization) is in `CONTEXT.md`. In brief:
   `styles.scss`. Light and dark appearance follow the system preference
   through `color-scheme: light dark`. Fonts are self-hosted, so nothing
   loads from a third party.
+- **The brief's named APIs.** Where the challenge names an API, that API is
+  used: the creation form is an Angular Reactive Form of Material form
+  fields (`ReactiveFormsModule`, `mat-form-field`, `matInput`, `mat-select`,
+  errors in `mat-error`), a User's detail opens in a `MatDialog`, success and
+  error messages are `MatSnackBar`s, the list pages with `MatPaginator`, and
+  the smiley is a standalone `SmileyComponent`. The form is still validated
+  by the shared creation schema alone: one group-level validator parses the
+  draft and writes each issue onto the control at its path, and Material's
+  error state is opened for an issue caused from outside a control, so a
+  field the chosen Role has just made required is marked at fault before
+  anyone visits it. Two things depart from the brief's wording on purpose
+  and are documented here: below tablet width the table gives way to a
+  stacked presentation (next), and the API is served under `/api`.
 - **Mobile-first.** The phone viewport is the baseline and wider layouts add
   to it. The table's four columns do not fit a phone, so below tablet width
   the list is a stacked per-User presentation carrying the same fields; the
@@ -319,7 +332,7 @@ normalizer are not tested in isolation; their behaviour is proved above them.
 ## How this was built
 
 The order was documentation first, then code. `.scratch/user-directory/`
-holds the spec and the eleven tickets that were implemented in sequence,
+holds the spec and the twelve tickets that were implemented in sequence,
 each with a comment recording what was verified and what the review changed.
 `CONTEXT.md` fixes the vocabulary; `docs/adr/` records the decisions.
 

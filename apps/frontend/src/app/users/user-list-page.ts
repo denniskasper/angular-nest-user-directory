@@ -11,10 +11,21 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { fullName, UserPage } from '@pdr-cloud/shared';
 import { debounceTime, Subject } from 'rxjs';
+
+/**
+ * The paginator's own label, read to assistive technology as the page
+ * changes: which page this is of how many. The positions shown sit beside
+ * it in the pager.
+ */
+class PageOfPagesIntl extends MatPaginatorIntl {
+  override getRangeLabel = (page: number, pageSize: number, length: number) =>
+    `Page ${page + 1} of ${Math.max(1, Math.ceil(length / pageSize))}`;
+}
 
 /**
  * The directory: a page of Users, searchable by Full Name, readable at any
@@ -25,8 +36,9 @@ import { debounceTime, Subject } from 'rxjs';
  *
  * The page being browsed and the search term live in the URL query, bound
  * to inputs by the router, and the resource derives from them — so paging
- * and searching are navigations, the list re-fetches declaratively, and a
- * URL reproduces exactly what was on screen. The server does the narrowing
+ * (a Material paginator, whose page change is a navigation) and searching
+ * are navigations, the list re-fetches declaratively, and a URL reproduces
+ * exactly what was on screen. The server does the narrowing
  * and the cutting; the browser never holds more than one page.
  *
  * Each User's name is a link to their detail, stretched over the whole
@@ -35,7 +47,8 @@ import { debounceTime, Subject } from 'rxjs';
  */
 @Component({
   selector: 'app-user-list-page',
-  imports: [MatTableModule, RouterLink, RouterOutlet],
+  imports: [MatPaginatorModule, MatTableModule, RouterLink, RouterOutlet],
+  providers: [{ provide: MatPaginatorIntl, useClass: PageOfPagesIntl }],
   templateUrl: './user-list-page.html',
   styleUrl: './user-list-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

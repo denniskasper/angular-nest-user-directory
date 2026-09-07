@@ -12,153 +12,125 @@
     class="form"
     aria-labelledby="create-title"
     novalidate
-    (submit)="onSubmit($event)"
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
   >
     <fieldset class="group">
       <legend class="eyebrow group__legend">Name</legend>
       <div class="group__fields group__fields--pair">
-        @let firstNameError = errorOf(form.firstName);
-        <div class="field" [class.field--invalid]="firstNameError">
-          <label class="field__label" for="firstName">First name</label>
+        <mat-form-field class="field">
+          <mat-label>First name</mat-label>
           <input
+            matInput
             id="firstName"
             data-field="firstName"
-            class="field__input"
             type="text"
             autocomplete="given-name"
-            [formField]="form.firstName"
-            [attr.aria-invalid]="!!firstNameError"
-            [attr.aria-describedby]="firstNameError ? 'firstName-error' : null"
+            formControlName="firstName"
           />
-          @if (firstNameError) {
-          <p id="firstName-error" class="field__error">{{ firstNameError }}</p>
-          }
-        </div>
-        @let lastNameError = errorOf(form.lastName);
-        <div class="field" [class.field--invalid]="lastNameError">
-          <label class="field__label" for="lastName">Last name</label>
+          <mat-error>{{ errorOf('firstName') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field class="field">
+          <mat-label>Last name</mat-label>
           <input
+            matInput
             id="lastName"
             data-field="lastName"
-            class="field__input"
             type="text"
             autocomplete="family-name"
-            [formField]="form.lastName"
-            [attr.aria-invalid]="!!lastNameError"
-            [attr.aria-describedby]="lastNameError ? 'lastName-error' : null"
+            formControlName="lastName"
           />
-          @if (lastNameError) {
-          <p id="lastName-error" class="field__error">{{ lastNameError }}</p>
-          }
-        </div>
+          <mat-error>{{ errorOf('lastName') }}</mat-error>
+        </mat-form-field>
       </div>
     </fieldset>
 
     <fieldset class="group">
       <legend class="eyebrow group__legend">Contact</legend>
       <div class="group__fields group__fields--pair">
-        @let emailError = errorOf(form.email);
-        <div class="field" [class.field--invalid]="emailError">
-          <label class="field__label" for="email">Email</label>
+        <mat-form-field class="field">
+          <mat-label>Email</mat-label>
           <input
+            matInput
             id="email"
             data-field="email"
-            class="field__input"
             type="email"
             autocomplete="email"
             spellcheck="false"
-            [formField]="form.email"
-            [attr.aria-invalid]="!!emailError"
-            [attr.aria-describedby]="emailError ? 'email-error' : null"
+            formControlName="email"
           />
-          @if (emailError) {
-          <p id="email-error" class="field__error">{{ emailError }}</p>
-          }
-        </div>
-        @let phoneNumberError = errorOf(form.phoneNumber);
-        <div class="field" [class.field--invalid]="phoneNumberError">
-          @let phoneNumberRequiredBy = requiredBy('phoneNumber');
-          <label class="field__label" for="phoneNumber">
+          <mat-error>{{ errorOf('email') }}</mat-error>
+        </mat-form-field>
+        @let phoneNumberRequiredBy = requiredBy('phoneNumber');
+        <mat-form-field class="field">
+          <mat-label>
             Phone number
             @if (phoneNumberRequiredBy) {
             <span class="field__flag" [attr.data-role]="phoneNumberRequiredBy"
               >Required for {{ phoneNumberRequiredBy }}</span
             >
             }
-          </label>
+          </mat-label>
           <input
+            matInput
             id="phoneNumber"
             data-field="phoneNumber"
-            class="field__input"
             type="tel"
             autocomplete="tel"
-            [formField]="form.phoneNumber"
+            formControlName="phoneNumber"
             [attr.aria-required]="!!phoneNumberRequiredBy"
-            [attr.aria-invalid]="!!phoneNumberError"
-            [attr.aria-describedby]="phoneNumberError ? 'phoneNumber-error' : null"
           />
-          @if (phoneNumberError) {
-          <p id="phoneNumber-error" class="field__error">
-            {{ phoneNumberError }}
-          </p>
-          }
-        </div>
+          <mat-error>{{ errorOf('phoneNumber') }}</mat-error>
+        </mat-form-field>
       </div>
     </fieldset>
 
     <fieldset class="group">
       <legend class="eyebrow group__legend">Record</legend>
       <div class="group__fields group__fields--pair">
-        @let birthDateError = errorOf(form.birthDate);
-        <div class="field" [class.field--invalid]="birthDateError">
-          @let birthDateRequiredBy = requiredBy('birthDate');
-          <label class="field__label" for="birthDate">
+        @let birthDateRequiredBy = requiredBy('birthDate');
+        <mat-form-field class="field">
+          <mat-label>
             Birth date
             @if (birthDateRequiredBy) {
             <span class="field__flag" [attr.data-role]="birthDateRequiredBy"
               >Required for {{ birthDateRequiredBy }}</span
             >
             }
-          </label>
+          </mat-label>
           <input
+            matInput
             id="birthDate"
             data-field="birthDate"
-            class="field__input"
             type="date"
             autocomplete="bday"
-            [formField]="form.birthDate"
+            formControlName="birthDate"
             [attr.aria-required]="!!birthDateRequiredBy"
-            [attr.aria-invalid]="!!birthDateError"
-            [attr.aria-describedby]="birthDateError ? 'birthDate-error' : null"
           />
-          @if (birthDateError) {
-          <p id="birthDate-error" class="field__error">{{ birthDateError }}</p>
-          }
-        </div>
+          <mat-error>{{ errorOf('birthDate') }}</mat-error>
+        </mat-form-field>
 
-        @let roleError = errorOf(form.role);
-        <fieldset class="field roles" [class.field--invalid]="roleError">
-          <legend class="field__label">Role</legend>
-          <div class="roles__options">
-            @for (role of roles; track role) {
-            <label class="roles__option" [attr.data-role]="role">
-              <input
-                type="radio"
-                class="roles__input"
-                data-field="role"
-                [value]="role"
-                [formField]="form.role"
-                [attr.aria-invalid]="!!roleError"
-                [attr.aria-describedby]="roleError ? 'role-error' : null"
-              />
-              <span class="roles__name">{{ role }}</span>
-            </label>
+        <mat-form-field class="field">
+          <mat-label>Role</mat-label>
+          <mat-select
+            id="role"
+            data-field="role"
+            formControlName="role"
+            panelClass="roles"
+          >
+            @if (form.controls.role.value; as chosen) {
+            <mat-select-trigger>
+              <span class="role" [attr.data-role]="chosen">{{ chosen }}</span>
+            </mat-select-trigger>
             }
-          </div>
-          @if (roleError) {
-          <p id="role-error" class="field__error">{{ roleError }}</p>
-          }
-        </fieldset>
+            @for (role of roles; track role) {
+            <mat-option [value]="role" class="roles__option">
+              <span class="role" [attr.data-role]="role">{{ role }}</span>
+            </mat-option>
+            }
+          </mat-select>
+          <mat-error>{{ errorOf('role') }}</mat-error>
+        </mat-form-field>
       </div>
     </fieldset>
 
@@ -166,9 +138,9 @@
       <button
         type="submit"
         class="pill-button form__submit"
-        [disabled]="form().submitting()"
+        [disabled]="submitting()"
       >
-        {{ form().submitting() ? 'Adding…' : 'Add User' }}
+        {{ submitting() ? 'Adding…' : 'Add User' }}
       </button>
       <a class="pill-button pill-button--quiet form__cancel" routerLink="/"
         >Back to the directory</a

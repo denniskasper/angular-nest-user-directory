@@ -115,31 +115,18 @@
   </div>
   } @if (pageCount() > 1) {
   <nav class="pager" aria-label="Pagination">
-    <p class="pager__status" role="status">
+    <p class="pager__status">
       @if (range(); as range) { Showing
       <b>{{ range.from }}–{{ range.to }}</b> of {{ shown.total }} }
     </p>
-    <div class="pager__controls">
-      <button
-        type="button"
-        class="pill-button pill-button--quiet pager__previous"
-        [disabled]="shown.page <= 1"
-        (click)="goTo(shown.page - 1)"
-      >
-        Previous
-      </button>
-      <span class="pager__page">
-        Page <b>{{ shown.page }}</b> of {{ pageCount() }}
-      </span>
-      <button
-        type="button"
-        class="pill-button pill-button--quiet pager__next"
-        [disabled]="shown.page >= pageCount()"
-        (click)="goTo(shown.page + 1)"
-      >
-        Next
-      </button>
-    </div>
+    <mat-paginator
+      class="pager__controls"
+      [length]="shown.total"
+      [pageSize]="shown.pageSize"
+      [pageIndex]="shown.page - 1"
+      (page)="goTo($event.pageIndex + 1)"
+      hidePageSize
+    />
   </nav>
   } } @else {
   <p class="state" role="status">Loading Users…</p>

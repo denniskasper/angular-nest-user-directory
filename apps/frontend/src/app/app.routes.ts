@@ -11,7 +11,7 @@ export const appRoutes: Route[] = [
   {
     path: 'smiley',
     loadComponent: () =>
-      import('./smiley/smiley-page').then((m) => m.SmileyPage),
+      import('./smiley/smiley.component').then((m) => m.SmileyComponent),
   },
   {
     path: '',
@@ -23,7 +23,7 @@ export const appRoutes: Route[] = [
       {
         path: 'users/:id',
         loadComponent: () =>
-          import('./users/user-detail').then((m) => m.UserDetail),
+          import('./users/user-detail-route').then((m) => m.UserDetailRoute),
       },
     ],
   },

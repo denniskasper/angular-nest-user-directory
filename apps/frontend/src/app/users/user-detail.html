@@ -1,40 +1,30 @@
-<!-- The backdrop click is a pointer convenience only: Escape and the Close
-     button are its keyboard and focusable equivalents, so the dialog element
-     itself is not an interactive control. -->
-<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
-<dialog
-  #dialog
-  class="sheet"
-  aria-labelledby="user-detail-title"
-  (close)="onClosed()"
-  (click)="onBackdropClick($event)"
->
-  <article class="detail">
-    <span class="detail__thread" aria-hidden="true"></span>
+<article class="detail">
+  <span class="detail__thread" aria-hidden="true"></span>
 
-    <header class="detail__head">
-      <p class="eyebrow detail__eyebrow">
-        User <span class="detail__id">#{{ id() }}</span>
-      </p>
+  <header class="detail__head">
+    <p class="eyebrow detail__eyebrow">
+      User <span class="detail__id">#{{ id() }}</span>
+    </p>
 
-      <h2
-        id="user-detail-title"
-        class="detail__title"
-        [class.detail__title--absent]="!user.hasValue()"
-      >
-        {{ title() }}
-      </h2>
+    <h2
+      mat-dialog-title
+      class="detail__title"
+      [class.detail__title--absent]="!user.hasValue()"
+    >
+      {{ title() }}
+    </h2>
 
-      <button
-        type="button"
-        class="icon-button detail__close"
-        aria-label="Close"
-        (click)="close()"
-      >
-        <span aria-hidden="true">×</span>
-      </button>
-    </header>
+    <button
+      type="button"
+      class="icon-button detail__close"
+      aria-label="Close"
+      mat-dialog-close
+    >
+      <span aria-hidden="true">×</span>
+    </button>
+  </header>
 
+  <mat-dialog-content class="detail__body">
     @if (user.hasValue()) {
     <dl class="facts">
       <div class="fact">
@@ -96,5 +86,5 @@
     } @else {
     <p class="detail__note" role="status">Fetching the latest details…</p>
     }
-  </article>
-</dialog>
+  </mat-dialog-content>
+</article>

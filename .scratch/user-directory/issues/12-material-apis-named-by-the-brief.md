@@ -6,18 +6,18 @@ The brief says, verbatim: "Use Angular Reactive Forms", "Clicking a user row ope
 
 **Blocked by:** 11
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The creation form is a Reactive Form (`ReactiveFormsModule`, a `FormGroup` of `FormControl`s) validated by the shared `createUserSchema`; every issue is attached to the control at its path, and Role-dependent errors appear against their field the moment the Role changes, including on controls nobody has visited yet
-- [ ] Its controls are Material form fields (`mat-form-field` with `matInput`, `mat-select` for the Role) with errors shown in `mat-error`, full-width and single-column on phones, two columns permitted from tablet up
-- [ ] The User detail opens in a `MatDialog`, fetches the User individually, shows Full Name, email, phoneNumber, birthDate and Role, and dismisses by Close, Escape and backdrop; full-screen on phones, centred from tablet up
-- [ ] Success and error outcomes are shown with `MatSnackBar`; a success names the created User, an error is readable and dismissible, both are announced to assistive technology
-- [ ] The list is paginated with `MatPaginator` at 25 per page, reachable and tappable at phone width without horizontal scrolling
-- [ ] The smiley component's class is `SmileyComponent`, still standalone, still on `/smiley`, still built without positioning, images or vectors
-- [ ] The shared `createUserSchema` remains the only definition of what a new User must provide; no rule is restated in the form
-- [ ] The existing Seam 2 and Seam 3 specs pass unchanged in what they assert; selectors may change, expectations may not
-- [ ] `spec.md`'s Frontend composition paragraph names these APIs, and the README's Decisions section says the brief's named APIs are used
-- [ ] The stacked per-User presentation on phones and the `/api` route prefix stay as they are (not in this ticket; documented in the README)
+- [x] The creation form is a Reactive Form (`ReactiveFormsModule`, a `FormGroup` of `FormControl`s) validated by the shared `createUserSchema`; every issue is attached to the control at its path, and Role-dependent errors appear against their field the moment the Role changes, including on controls nobody has visited yet
+- [x] Its controls are Material form fields (`mat-form-field` with `matInput`, `mat-select` for the Role) with errors shown in `mat-error`, full-width and single-column on phones, two columns permitted from tablet up
+- [x] The User detail opens in a `MatDialog`, fetches the User individually, shows Full Name, email, phoneNumber, birthDate and Role, and dismisses by Close, Escape and backdrop; full-screen on phones, centred from tablet up
+- [x] Success and error outcomes are shown with `MatSnackBar`; a success names the created User, an error is readable and dismissible, both are announced to assistive technology
+- [x] The list is paginated with `MatPaginator` at 25 per page, reachable and tappable at phone width without horizontal scrolling
+- [x] The smiley component's class is `SmileyComponent`, still standalone, still on `/smiley`, still built without positioning, images or vectors
+- [x] The shared `createUserSchema` remains the only definition of what a new User must provide; no rule is restated in the form
+- [x] The existing Seam 2 and Seam 3 specs pass unchanged in what they assert; selectors may change, expectations may not
+- [x] `spec.md`'s Frontend composition paragraph names these APIs, and the README's Decisions section says the brief's named APIs are used
+- [x] The stacked per-User presentation on phones and the `/api` route prefix stay as they are (not in this ticket; documented in the README)
 
 ## Notes for the implementer
 
@@ -27,3 +27,16 @@ The brief says, verbatim: "Use Angular Reactive Forms", "Clicking a user row ope
 - `MatPaginator` emits page changes; keep paging a navigation (query parameter) so a URL still reproduces what was on screen, as ticket 06 settled.
 - Keep the Material 3 theme and the brand custom properties; the new components pick up the theme through `mat.theme` already applied in `styles.scss`.
 - Tests: no new seam. Update the Seam 3 selectors and the `presentation.ts` helpers as needed, keep the four directory specs and the shell spec asserting exactly what they assert now, at both viewports.
+
+## Comments
+
+Implemented. Verified against the acceptance criteria:
+
+- The form (`apps/frontend/src/app/users/create-user-page.*`) is a Reactive Form: `ReactiveFormsModule`, a `FormGroup` of six `FormControl`s, `formControlName` on each Material control. One group-level validator parses the draft with `createUserSchema` and writes each issue onto the control at its path with `setErrors`; a Conditional Requirement issue lands under the shared `CONDITIONAL_REQUIREMENT` key, a malformed or missing entry under `schema`, the server's message under `server`. An `ErrorStateMatcher` provided on the component opens Material's error state for a control that is invalid and either visited, submitted, or carrying an error caused from outside it — so choosing admin marks a never-visited phoneNumber and birthDate at once, and an email fault does not hide them. Blanks in `phoneNumber` and `birthDate` are still sent as absences; no rule is restated in the form.
+- Its controls are `mat-form-field`s with `matInput`, a `mat-select` for the Role (its trigger showing the Role's seal), errors in `mat-error`. The fields use the filled appearance with the fill made transparent, so each is the ruled line the sheet was designed around; the "Required for admin" flag sits inside `mat-label`, measured in ems so it shrinks with the label when it floats, and is read as part of the field's name. Full width and single column on phones, two columns from tablet up, as before.
+- The detail opens in a `MatDialog`: the `users/:id` route now renders `UserDetailRoute`, which opens `UserDetail` as the dialog's content with the route's id signal as `MAT_DIALOG_DATA`, fetches the User individually with `httpResource`, and navigates back (or to the list, from a deep link) when the dialog closes by Close (`mat-dialog-close`), Escape or the backdrop; leaving the route closes it without navigating again. The pane is `maxWidth: 100vw` with a panel class shaped in `styles/_overlays.scss`: the whole screen on phones, a centred card from tablet up. The dialog uses the noop scroll strategy and the page is held by `body:has(.user-detail-pane) { overflow: hidden }`, so `window.scrollY` survives exactly as the list spec expects.
+- Success and error outcomes are `MatSnackBar`s opened from the form: a success names the User and the id and clears itself after seven seconds; an error carries a Dismiss action and stays; the success is polite and the error assertive, so both are announced. `Notices` and `NoticeOutlet` are gone from the shell.
+- The list pages with `MatPaginator` inside the `Pagination` nav, `hidePageSize`, its page change a query-parameter navigation as before; a `MatPaginatorIntl` on the page sets its range label to "Page 2 of 4" and the positions shown sit beside it. Its icon buttons are grown to the touch target through the icon-button size token, so they stay at least 44px tall in the sticky pager on phones.
+- The smiley's class is `SmileyComponent` in `smiley.component.ts`, selector `app-smiley`, still standalone, still on `/smiley`, its template and styles unchanged.
+- `spec.md`'s Frontend composition paragraph now names the APIs; the README's Decisions section has a "The brief's named APIs" bullet that also names the two deliberate departures (the stacked presentation below tablet width, and the `/api` prefix) and says "twelve tickets".
+- Tests: no new seam. Seam 3 selectors changed where the controls changed and nowhere else: the Role is chosen through a combobox and its option (`create-user-form.ts`, `chooseRole`); the phone-width check measures the whole `mat-form-field`, the control the person sees, since the input inside a Material field is inset 16px each side; the snack bar is found by its container class, taking the most recent one because the previous is still leaving when the next arrives (Material only sets `role` on the live region in Firefox, so a role selector cannot find it in Chromium); and the content column is read with `includeHidden` while the dialog is open, since the CDK marks everything behind a modal `aria-hidden`. Every expectation is as it was. All 18 browser specs pass at both viewports; `npm test`, `npm run typecheck`, `npm run lint` and `npm run build` are green, and the build's budget warnings are the same ones the committed tree already printed.

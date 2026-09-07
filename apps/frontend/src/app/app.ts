@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { USER_ROLES } from '@pdr-cloud/shared';
-import { NoticeOutlet } from './notice';
 
 /**
  * The application shell: brand header, navigation, the content column every
@@ -9,7 +8,7 @@ import { NoticeOutlet } from './notice';
  * app.scss and styles/_breakpoints.scss.
  */
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NoticeOutlet],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',

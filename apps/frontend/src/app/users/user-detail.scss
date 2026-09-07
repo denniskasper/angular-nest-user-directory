@@ -4,57 +4,15 @@
 
 $ease: motion.$ease;
 
-// ---------------------------------------------------------------- sheet ---
-// Phone baseline: the dialog is the whole screen, a sheet that rises from
-// the bottom edge. Nothing about it is a box on a phone.
-.sheet {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  max-width: none;
-  height: 100dvh;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  overflow: auto;
-  overscroll-behavior: contain;
-
-  &[open] {
-    animation: sheet-rise 380ms $ease both;
-  }
-
-  &::backdrop {
-    background: color-mix(
-      in oklab,
-      var(--mat-sys-scrim, #000) 40%,
-      transparent
-    );
-    backdrop-filter: blur(6px) saturate(1.2);
-    animation: fade-in 240ms ease-out both;
-  }
-
-  // Tablet and wider: a centred card held at a reading width, lifted off
-  // the page by the scrim rather than a heavy shadow.
-  @include bp.up(tablet) {
-    width: min(34rem, calc(100vw - 3rem));
-    // With inset: 0, `auto` would stretch to the viewport; fit the content.
-    height: fit-content;
-    max-height: calc(100dvh - 3rem);
-    margin: auto;
-    border-radius: var(--mat-sys-corner-extra-large);
-    box-shadow: 0 24px 48px -16px
-      color-mix(in oklab, var(--mat-sys-on-surface) 30%, transparent);
-
-    &[open] {
-      animation: card-in 320ms $ease both;
-    }
-  }
+// --------------------------------------------------------------- detail ---
+// The content of the dialog. The pane it sits in — the whole screen on a
+// phone, a centred card from tablet up — is shaped in styles/_overlays.scss,
+// since the overlay is rendered outside this view.
+:host {
+  display: block;
+  min-height: 100%;
 }
 
-// --------------------------------------------------------------- detail ---
 .detail {
   position: relative;
   padding: calc(var(--shell-gutter) + 0.5rem) var(--shell-gutter)
@@ -105,15 +63,30 @@ $ease: motion.$ease;
   color: var(--mat-sys-primary);
 }
 
-.detail__title {
+// The dialog's title, set as the page titles are rather than in the
+// dialog's own headline style, and without the padding it would bring.
+h2.detail__title.mat-mdc-dialog-title {
   grid-area: title;
+  margin: 0;
+  padding: 0;
+  font-family: 'Fraunces Variable', serif;
+  font-variation-settings:
+    'opsz' 72,
+    'SOFT' 40;
+  font-weight: 500;
   font-size: clamp(1.875rem, 5vw + 0.5rem, 2.75rem);
   line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--mat-sys-on-surface);
   text-wrap: balance;
   overflow-wrap: anywhere;
+
+  &::before {
+    display: none;
+  }
 }
 
-.detail__title--absent {
+h2.detail__title--absent.mat-mdc-dialog-title {
   font-variation-settings:
     'opsz' 72,
     'SOFT' 100,
@@ -134,6 +107,17 @@ $ease: motion.$ease;
   &:hover {
     transform: rotate(90deg);
   }
+}
+
+// The dialog's content region, without its own scrolling and padding:
+// the surface scrolls as one sheet.
+.mat-mdc-dialog-container .detail__body.mat-mdc-dialog-content {
+  max-height: none;
+  padding: 0;
+  overflow: visible;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
 }
 
 // ---------------------------------------------------------------- facts ---
@@ -192,34 +176,4 @@ $ease: motion.$ease;
 
 .detail__retry {
   margin-left: 0.5rem;
-}
-
-// --------------------------------------------------------------- motion ---
-@keyframes sheet-rise {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: none;
-  }
-}
-
-@keyframes card-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }

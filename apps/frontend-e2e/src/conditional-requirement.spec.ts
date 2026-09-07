@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { createUserForm } from './create-user-form';
 
 /**
  * Seam 3 (spec.md, Testing Decisions): the browser. Covers ticket 08 —
@@ -13,7 +14,7 @@ test.describe('the Conditional Requirement', () => {
     page,
   }) => {
     await page.goto('/users/new');
-    const form = page.getByRole('form', { name: 'Add a User' });
+    const { form, chooseRole } = createUserForm(page);
     const phoneNumber = form.getByLabel('Phone number');
     const birthDate = form.getByLabel('Birth date');
     const phoneNumberError = form.getByText('An admin must have a phone number');
@@ -29,7 +30,7 @@ test.describe('the Conditional Requirement', () => {
 
     // Choosing admin, without visiting either field or submitting, marks
     // both fields required and both at fault, each against its own control.
-    await form.getByRole('radio', { name: 'Admin' }).check();
+    await chooseRole('Admin');
     await expect(phoneNumber).toHaveAccessibleName(/Required for admin/);
     await expect(birthDate).toHaveAccessibleName(/Required for admin/);
     await expect(phoneNumberError).toBeVisible();
@@ -65,7 +66,7 @@ test.describe('the Conditional Requirement', () => {
 
     // Editor requires only phoneNumber; viewer neither. The requirement
     // follows the Role the moment it changes.
-    await form.getByRole('radio', { name: 'Editor' }).check();
+    await chooseRole('Editor');
     await expect(birthDateError).toBeHidden();
     await expect(birthDate).not.toHaveAccessibleName(/Required for/);
     await expect(phoneNumber).toHaveAccessibleName(/Required for editor/);
@@ -74,7 +75,7 @@ test.describe('the Conditional Requirement', () => {
       form.getByText('An editor must have a phone number'),
     ).toBeVisible();
 
-    await form.getByRole('radio', { name: 'Viewer' }).check();
+    await chooseRole('Viewer');
     await expect(form.getByText('must have')).toHaveCount(0);
     await expect(form.getByText('Required for')).toHaveCount(0);
     expect(posts).toEqual([]);

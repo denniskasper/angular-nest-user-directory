@@ -107,11 +107,6 @@ $ease: motion.$ease;
     )
   );
 
-  // Labels are set like the sheet's other running text.
-  .mdc-floating-label {
-    letter-spacing: 0.02em;
-  }
-
   // The native date control paints its own chrome; keep it on the line.
   input[type='date'] {
     font-variant-numeric: tabular-nums;

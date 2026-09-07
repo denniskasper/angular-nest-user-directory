@@ -20,9 +20,14 @@ export function createUserForm(page: Page) {
 }
 
 /**
- * The snack bar the outcome of an action is shown in: the most recent one,
- * since the one before it is still leaving while it arrives.
+ * The snack bar the outcome of an action is shown in, by how it is read:
+ * a success politely, an error interrupting. The most recent one, since
+ * the one before it is still leaving while it arrives.
  */
-export function snackBar(page: Page): Locator {
-  return page.locator('.mat-mdc-snack-bar-container').last();
+export function snackBar(page: Page, tone: 'success' | 'error'): Locator {
+  const live = tone === 'error' ? 'assertive' : 'polite';
+  return page
+    .locator('mat-snack-bar-container')
+    .filter({ has: page.locator(`[aria-live="${live}"]`) })
+    .last();
 }

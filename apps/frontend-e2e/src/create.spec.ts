@@ -26,6 +26,8 @@ test.describe('create a User', () => {
     const add = form.getByRole('button', { name: 'Add User' });
 
     // Single column and full width on phones; two columns from tablet up.
+    // Measured on the form field, the control as the person sees it: the
+    // input inside a Material field is inset from its edges.
     const viewport = page.viewportSize();
     const first = await field('First name').boundingBox();
     const last = await field('Last name').boundingBox();
@@ -71,7 +73,9 @@ test.describe('create a User', () => {
     // A failure is reported clearly, and the form stays as it was.
     await page.route('**/api/users', (route) => route.abort('failed'));
     await add.click();
-    await expect(snackBar(page)).toContainText('The User could not be added');
+    await expect(snackBar(page, 'error')).toContainText(
+      'The User could not be added',
+    );
     await expect(page).toHaveURL(/\/users\/new$/);
     await expect(firstName).toHaveValue('Ada');
     await page.unroute('**/api/users');
@@ -87,7 +91,7 @@ test.describe('create a User', () => {
     expect(id).toBeGreaterThan(100);
 
     await expect(page).toHaveURL(/\/\?search=Ada(\+|%20)Lovelace$/);
-    await expect(snackBar(page)).toContainText(
+    await expect(snackBar(page, 'success')).toContainText(
       `Ada Lovelace was added as User #${id}`,
     );
     const ada = entries.filter({

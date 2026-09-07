@@ -115,15 +115,13 @@
   </div>
   } @if (pageCount() > 1) {
   <nav class="pager" aria-label="Pagination">
-    <p class="pager__status">
-      @if (range(); as range) { Showing
-      <b>{{ range.from }}–{{ range.to }}</b> of {{ shown.total }} }
-    </p>
+    <!-- The page is the URL's, so the label moves with the navigation,
+         while the list it belongs to dims until the page arrives. -->
     <mat-paginator
       class="pager__controls"
       [length]="shown.total"
       [pageSize]="shown.pageSize"
-      [pageIndex]="shown.page - 1"
+      [pageIndex]="pageNumber() - 1"
       (page)="goTo($event.pageIndex + 1)"
       hidePageSize
     />

@@ -39,34 +39,25 @@ import {
 import { firstValueFrom } from 'rxjs';
 
 /**
- * What the form holds while a User is being described: one string per
- * control, empty until entered, so each maps onto an input one to one.
- * The Role is empty until one is chosen.
+ * The controls a User is described with, in reading order: one string per
+ * control, empty until entered, so each maps onto an input one to one. The
+ * Role is empty until one is chosen.
  */
-interface Draft {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  birthDate: string;
-  role: Role | '';
+function draftControls() {
+  return {
+    firstName: new FormControl('', { nonNullable: true }),
+    lastName: new FormControl('', { nonNullable: true }),
+    email: new FormControl('', { nonNullable: true }),
+    phoneNumber: new FormControl('', { nonNullable: true }),
+    birthDate: new FormControl('', { nonNullable: true }),
+    role: new FormControl<Role | ''>('', { nonNullable: true }),
+  };
 }
 
+type DraftForm = FormGroup<ReturnType<typeof draftControls>>;
+/** What the form holds while a User is being described. */
+type Draft = ReturnType<DraftForm['getRawValue']>;
 type Field = keyof Draft;
-
-/** The controls in reading order, for finding the first at fault. */
-const FIELDS: readonly Field[] = [
-  'firstName',
-  'lastName',
-  'email',
-  'phoneNumber',
-  'birthDate',
-  'role',
-];
-
-function isField(name: string): name is Field {
-  return (FIELDS as readonly string[]).includes(name);
-}
 
 /**
  * The kinds of error a control can carry, keyed in its `errors`. A `schema`
@@ -153,9 +144,9 @@ const FAILURE: MatSnackBarConfig = {
  * Field-level problems appear inline; the outcome of a submission is shown
  * in a snack bar, and a success returns to the directory searched for the
  * new User's Full Name. Should the server reject the User anyway, its
- * field-keyed messages are attached to the controls they name. A submit
- * that fails moves focus to the first control at fault, whose error is read
- * with it.
+ * field-keyed messages are attached to the controls they name until each
+ * is edited. A submit that fails moves focus to the first control at
+ * fault, whose error is read with it.
  *
  * Single column and full width on phones; from tablet up the name and the
  * contact pairs sit side by side (create-user-page.scss).
@@ -181,11 +172,14 @@ export class CreateUserPage {
   protected readonly submitting = signal(false);
 
   /**
-   * What the server last rejected, held so its messages stay on the
-   * controls they name until the value it rejected is changed.
+   * What the server last rejected: its message per control, and the value
+   * it rejected, so a message stays on its control until that control is
+   * edited and not a moment longer.
    */
-  private rejected: { value: Draft; fields: Partial<Record<Field, string>> } =
-    { value: {} as Draft, fields: {} };
+  private rejected: {
+    value: Partial<Draft>;
+    fields: Partial<Record<Field, string>>;
+  } = { value: {}, fields: {} };
 
   /**
    * One rule for the whole group: parse the draft with the creation schema
@@ -198,45 +192,47 @@ export class CreateUserPage {
     const result = createUserSchema.safeParse(toInput(draft));
     const issues: Partial<Record<Field, ValidationErrors>> = {};
     for (const issue of result.success ? [] : result.error.issues) {
-      const field = String(issue.path[0]);
-      if (!isField(field)) continue;
+      const field = String(issue.path[0]) as Field;
+      if (!group.get(field)) continue;
       const kind = isConditionalRequirementIssue(issue)
         ? CONDITIONAL_REQUIREMENT
         : SCHEMA;
       issues[field] = { ...issues[field], [kind]: issue.message };
     }
-    for (const field of FIELDS) {
+    const controls = (group as DraftForm).controls;
+    for (const [name, control] of Object.entries(controls)) {
+      const field = name as Field;
+      if (this.rejected.value[field] !== draft[field]) {
+        delete this.rejected.fields[field];
+      }
       const server = this.rejected.fields[field];
-      const unchanged = this.rejected.value[field] === draft[field];
       const errors: ValidationErrors = {
         ...issues[field],
-        ...(server && unchanged ? { [SERVER]: server } : {}),
+        ...(server ? { [SERVER]: server } : {}),
       };
-      group
-        .get(field)
-        ?.setErrors(Object.keys(errors).length ? errors : null, {
-          emitEvent: false,
-        });
+      control.setErrors(Object.keys(errors).length ? errors : null, {
+        emitEvent: false,
+      });
     }
     return null;
   };
 
-  protected readonly form = new FormGroup(
-    {
-      firstName: new FormControl('', { nonNullable: true }),
-      lastName: new FormControl('', { nonNullable: true }),
-      email: new FormControl('', { nonNullable: true }),
-      phoneNumber: new FormControl('', { nonNullable: true }),
-      birthDate: new FormControl('', { nonNullable: true }),
-      role: new FormControl<Role | ''>('', { nonNullable: true }),
-    },
-    { validators: this.validateDraft },
-  );
+  protected readonly form: DraftForm = new FormGroup(draftControls(), {
+    validators: this.validateDraft,
+  });
+  /** The controls in reading order, for finding the first at fault. */
+  private readonly fields = Object.keys(this.form.controls) as Field[];
 
-  /** The Role chosen, as a signal so the flags follow it under OnPush. */
+  /**
+   * Reactive forms are not signals. Reading these in the template ties the
+   * view to the form, so the flags and errors re-render on every value and
+   * validity change — under OnPush and without zones, not only after an
+   * event that happened in this view.
+   */
   private readonly role = toSignal(this.form.controls.role.valueChanges, {
     initialValue: this.form.controls.role.value,
   });
+  private readonly validity = toSignal(this.form.events);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly http = inject(HttpClient);
@@ -251,6 +247,7 @@ export class CreateUserPage {
 
   /** The first problem against a field; the field shows it only while in error state. */
   protected errorOf(field: Field): string | undefined {
+    this.validity();
     const errors = this.form.controls[field].errors;
     return errors ? String(Object.values(errors)[0]) : undefined;
   }
@@ -303,8 +300,11 @@ export class CreateUserPage {
     const fields: Partial<Record<Field, string>> = {};
     const unplaced: string[] = [];
     for (const [field, messages] of Object.entries(failure.fields)) {
-      if (isField(field)) fields[field] = messages.join(' ');
-      else unplaced.push(`${field}: ${messages.join('; ')}`);
+      if (field in this.form.controls) {
+        fields[field as Field] = messages.join(' ');
+      } else {
+        unplaced.push(`${field}: ${messages.join('; ')}`);
+      }
     }
     const placed = Object.keys(fields).length > 0;
     if (!placed && !unplaced.length) unplaced.push(failure.message);
@@ -324,7 +324,7 @@ export class CreateUserPage {
   }
 
   private focusFirstInvalid(): void {
-    const first = FIELDS.find((field) => this.form.controls[field].invalid);
+    const first = this.fields.find((field) => this.form.controls[field].invalid);
     if (!first) return;
     this.host.nativeElement
       .querySelector<HTMLElement>(`[data-field="${first}"]`)

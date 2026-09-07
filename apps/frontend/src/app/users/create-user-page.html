@@ -116,7 +116,6 @@
             id="role"
             data-field="role"
             formControlName="role"
-            panelClass="roles"
           >
             @if (form.controls.role.value; as chosen) {
             <mat-select-trigger>
@@ -124,7 +123,7 @@
             </mat-select-trigger>
             }
             @for (role of roles; track role) {
-            <mat-option [value]="role" class="roles__option">
+            <mat-option [value]="role">
               <span class="role" [attr.data-role]="role">{{ role }}</span>
             </mat-option>
             }

@@ -63,21 +63,14 @@ $ease: motion.$ease;
   color: var(--mat-sys-primary);
 }
 
-// The dialog's title, set as the page titles are rather than in the
-// dialog's own headline style, and without the padding it would bring.
-h2.detail__title.mat-mdc-dialog-title {
+// The dialog's title: its face is set through the dialog's own tokens
+// (styles/_overlays.scss); what remains is the page-title shape and the
+// spacer the dialog would otherwise put before it.
+.detail__title {
   grid-area: title;
   margin: 0;
-  padding: 0;
-  font-family: 'Fraunces Variable', serif;
-  font-variation-settings:
-    'opsz' 72,
-    'SOFT' 40;
-  font-weight: 500;
   font-size: clamp(1.875rem, 5vw + 0.5rem, 2.75rem);
   line-height: 1.05;
-  letter-spacing: -0.01em;
-  color: var(--mat-sys-on-surface);
   text-wrap: balance;
   overflow-wrap: anywhere;
 
@@ -86,7 +79,9 @@ h2.detail__title.mat-mdc-dialog-title {
   }
 }
 
-h2.detail__title--absent.mat-mdc-dialog-title {
+// Outweighs the dialog's own title colour, whatever the order the two
+// stylesheets arrived in.
+h2.detail__title--absent {
   font-variation-settings:
     'opsz' 72,
     'SOFT' 100,
@@ -109,15 +104,12 @@ h2.detail__title--absent.mat-mdc-dialog-title {
   }
 }
 
-// The dialog's content region, without its own scrolling and padding:
-// the surface scrolls as one sheet.
-.mat-mdc-dialog-container .detail__body.mat-mdc-dialog-content {
+// The dialog's content region, without its own scrolling: the surface
+// scrolls as one sheet. Its padding and text tokens are set with the
+// pane's (styles/_overlays.scss).
+.detail__body {
   max-height: none;
-  padding: 0;
   overflow: visible;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
 }
 
 // ---------------------------------------------------------------- facts ---

@@ -4,27 +4,57 @@
 // lives here.
 //
 //   @use 'overlays';   (from styles.scss only; these are global classes)
+@use '@angular/material' as mat;
 @use 'breakpoints' as bp;
 
 // ------------------------------------------------------------- detail ---
 // Phone baseline: the dialog is the whole screen, a sheet without corners.
 // Tablet and wider: a centred card held at a reading width, lifted off the
 // page by the scrim rather than a heavy shadow. The MatDialog that opens
-// it sets maxWidth to the viewport, so nothing caps these.
+// it sets maxWidth to the viewport, so nothing caps these. The title is
+// set as the page titles are and the content region carries no padding of
+// its own; the detail lays itself out (user-detail.scss).
 .cdk-overlay-pane.user-detail-pane {
   width: 100vw;
   height: 100dvh;
   max-height: 100dvh;
-  --mat-dialog-container-min-width: 0;
-  --mat-dialog-container-shape: 0;
+
+  @include mat.dialog-overrides(
+    (
+      container-min-width: 0,
+      container-shape: 0,
+      headline-padding: 0,
+      content-padding: 0,
+      subhead-color: var(--mat-sys-on-surface),
+      subhead-font: (
+        'Fraunces Variable',
+        serif,
+      ),
+      subhead-weight: 500,
+      subhead-tracking: -0.01em,
+      supporting-text-color: var(--mat-sys-on-surface),
+      supporting-text-font: var(--mat-sys-body-large-font),
+      supporting-text-size: var(--mat-sys-body-large-size),
+      supporting-text-line-height: var(--mat-sys-body-large-line-height),
+      supporting-text-weight: var(--mat-sys-body-large-weight),
+      supporting-text-tracking: var(--mat-sys-body-large-tracking),
+    )
+  );
 
   @include bp.up(tablet) {
     width: min(34rem, calc(100vw - 3rem));
     height: auto;
     max-height: calc(100dvh - 3rem);
-    --mat-dialog-container-shape: var(--mat-sys-corner-extra-large);
-    --mat-dialog-container-elevation-shadow: 0 24px 48px -16px
-      color-mix(in oklab, var(--mat-sys-on-surface) 30%, transparent);
+
+    @include mat.dialog-overrides(
+      (
+        container-shape: var(--mat-sys-corner-extra-large),
+        container-elevation-shadow: (
+          0 24px 48px -16px
+            color-mix(in oklab, var(--mat-sys-on-surface) 30%, transparent),
+        ),
+      )
+    );
   }
 }
 
@@ -39,17 +69,25 @@ body:has(.user-detail-pane) {
   overflow: hidden;
 }
 
-// ---------------------------------------------------------------- notices ---
+// ------------------------------------------------------------ notices ---
 // A snack bar is the outcome of an action, said once: a success in the
 // inverse surface Material gives it, an error on the error container so
-// it reads as one. Both keep to a reading width.
+// it reads as one.
 .mat-mdc-snack-bar-container {
-  --mat-snack-bar-container-shape: var(--mat-sys-corner-large);
-  --mat-snack-bar-supporting-text-weight: 500;
+  @include mat.snack-bar-overrides(
+    (
+      container-shape: var(--mat-sys-corner-large),
+      supporting-text-weight: 500,
+    )
+  );
 
   &.notice--error {
-    --mat-snack-bar-container-color: var(--mat-sys-error-container);
-    --mat-snack-bar-supporting-text-color: var(--mat-sys-on-error-container);
-    --mat-snack-bar-button-color: var(--mat-sys-on-error-container);
+    @include mat.snack-bar-overrides(
+      (
+        container-color: var(--mat-sys-error-container),
+        supporting-text-color: var(--mat-sys-on-error-container),
+        button-color: var(--mat-sys-on-error-container),
+      )
+    );
   }
 }

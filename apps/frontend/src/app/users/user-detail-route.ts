@@ -1,5 +1,5 @@
-import { Location } from '@angular/common';
 import { NoopScrollStrategy } from '@angular/cdk/overlay';
+import { Location } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -45,8 +45,12 @@ export class UserDetailRoute implements OnDestroy {
         panelClass: 'user-detail-pane',
         backdropClass: 'user-detail-backdrop',
         // The page is held where it is by styles, not by moving it, so
-        // browsing position survives untouched (styles.scss).
+        // browsing position survives untouched (styles/_overlays.scss).
         scrollStrategy: new NoopScrollStrategy(),
+        // Leaving the route is what closes the dialog (below). Were the
+        // dialog to close itself on Back, it would do so before the route
+        // is left, and go back a second time.
+        closeOnNavigation: false,
       });
       this.ref.afterClosed().subscribe(() => this.onClosed());
     });

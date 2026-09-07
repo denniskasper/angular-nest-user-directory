@@ -1,3 +1,4 @@
+@use '@angular/material' as mat;
 @use 'breakpoints' as bp;
 @use 'motion';
 
@@ -304,11 +305,9 @@ $ease: motion.$ease;
   bottom: 0;
   z-index: 5;
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 0.5rem;
+  justify-content: end;
   margin: 1rem calc(-1 * var(--shell-gutter)) 0;
-  padding: 0.5rem var(--shell-gutter) max(0.5rem, env(safe-area-inset-bottom));
+  padding: 0.25rem var(--shell-gutter) max(0.25rem, env(safe-area-inset-bottom));
   border-top: 1px solid var(--mat-sys-outline-variant);
   background: color-mix(in oklab, var(--mat-sys-surface) 86%, transparent);
   backdrop-filter: blur(14px) saturate(1.4);
@@ -317,40 +316,35 @@ $ease: motion.$ease;
   @include bp.up(tablet) {
     position: static;
     margin: 0;
-    padding: 1.25rem 0 0;
+    padding: 1rem 0 0;
     border-top: 0;
     background: none;
     backdrop-filter: none;
   }
 }
 
-.pager__status {
-  margin: 0;
-  font: var(--mat-sys-body-medium);
-  font-variant-numeric: tabular-nums;
-  color: var(--mat-sys-on-surface-variant);
-
-  b {
-    font-weight: 600;
-    color: var(--mat-sys-on-surface);
-  }
-}
-
 // The Material paginator, tuned to the sheet: no surface of its own, its
-// page figure set like the pager's other text, and its buttons — the arrows
+// label set like the pager's other text, and its buttons — the arrows
 // where thumbs rest — grown to a fingertip.
 .pager__controls {
-  --mat-paginator-container-background-color: transparent;
-  --mat-paginator-container-text-color: var(--mat-sys-on-surface-variant);
-  --mat-paginator-container-text-font: var(--mat-sys-label-large-font);
-  --mat-paginator-container-text-size: var(--mat-sys-label-large-size);
-  --mat-paginator-container-text-weight: 600;
-  --mat-paginator-container-size: var(--touch-target);
-  --mat-icon-button-state-layer-size: var(--touch-target);
-  --mat-icon-button-icon-color: var(--mat-sys-on-surface);
-  --mat-icon-button-disabled-icon-color: var(--mat-sys-outline-variant);
+  @include mat.paginator-overrides(
+    (
+      container-background-color: transparent,
+      container-text-color: var(--mat-sys-on-surface-variant),
+      container-text-font: var(--mat-sys-label-large-font),
+      container-text-size: var(--mat-sys-label-large-size),
+      container-text-weight: 600,
+      container-size: var(--touch-target),
+      enabled-icon-color: var(--mat-sys-on-surface),
+      disabled-icon-color: var(--mat-sys-outline-variant),
+    )
+  );
+  @include mat.icon-button-overrides(
+    (
+      state-layer-size: var(--touch-target),
+    )
+  );
   // The paginator pads its own row; pulled back so the arrows sit flush
-  // with the gutter, where thumbs rest.
+  // with the gutter.
   margin-inline: -0.5rem;
-  white-space: nowrap;
 }

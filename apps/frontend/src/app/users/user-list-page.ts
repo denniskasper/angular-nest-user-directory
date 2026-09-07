@@ -18,13 +18,22 @@ import { fullName, UserPage } from '@pdr-cloud/shared';
 import { debounceTime, Subject } from 'rxjs';
 
 /**
- * The paginator's own label, read to assistive technology as the page
- * changes: which page this is of how many. The positions shown sit beside
- * it in the pager.
+ * The paginator's label, read to assistive technology as the page changes:
+ * the positions, counted from 1, of the first and last User on the page,
+ * and which page this is of how many. Each half holds together, so on a
+ * narrow phone the label breaks between them and nowhere else.
  */
-class PageOfPagesIntl extends MatPaginatorIntl {
-  override getRangeLabel = (page: number, pageSize: number, length: number) =>
-    `Page ${page + 1} of ${Math.max(1, Math.ceil(length / pageSize))}`;
+class ShowingRangeIntl extends MatPaginatorIntl {
+  override getRangeLabel = (page: number, pageSize: number, length: number) => {
+    const from = page * pageSize + 1;
+    const to = Math.min(length, from + pageSize - 1);
+    const pages = Math.max(1, Math.ceil(length / pageSize));
+    const positions = `Showing ${from}–${to} of ${length}`;
+    const pageOfPages = `Page ${page + 1} of ${pages}`;
+    return [positions, pageOfPages]
+      .map((half) => half.replace(/ /g, '\u00a0'))
+      .join(' · ');
+  };
 }
 
 /**
@@ -48,7 +57,7 @@ class PageOfPagesIntl extends MatPaginatorIntl {
 @Component({
   selector: 'app-user-list-page',
   imports: [MatPaginatorModule, MatTableModule, RouterLink, RouterOutlet],
-  providers: [{ provide: MatPaginatorIntl, useClass: PageOfPagesIntl }],
+  providers: [{ provide: MatPaginatorIntl, useClass: ShowingRangeIntl }],
   templateUrl: './user-list-page.html',
   styleUrl: './user-list-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,13 +103,6 @@ export class UserListPage {
   protected readonly pageCount = computed(() => {
     const shown = this.shown();
     return shown ? Math.max(1, Math.ceil(shown.total / shown.pageSize)) : 1;
-  });
-  /** The positions, counted from 1, of the first and last User on screen. */
-  protected readonly range = computed(() => {
-    const shown = this.shown();
-    if (!shown || shown.items.length === 0) return undefined;
-    const from = (shown.page - 1) * shown.pageSize + 1;
-    return { from, to: from + shown.items.length - 1 };
   });
 
   protected readonly columns = ['id', 'name', 'email', 'role'];

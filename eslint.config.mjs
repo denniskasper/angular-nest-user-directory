@@ -14,7 +14,12 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          allow: [
+            '^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$',
+            // The root manifest is the one place the version is stated
+            // (AGENTS.md, Versioning); the footer and the API docs read it.
+            '^(\\.\\./)+package\\.json$',
+          ],
           depConstraints: [
             {
               sourceTag: '*',

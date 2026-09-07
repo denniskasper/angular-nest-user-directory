@@ -14,6 +14,12 @@ fix: handle empty payload
 docs: note commit conventions
 ```
 
+## Versioning
+
+[Semantic Versioning](https://semver.org/), starting at `v0.1.0`. While the major is 0, a `feat` bumps the minor and a `fix` the patch; the major becomes 1 when the API and the store format are stable.
+
+The version lives once, in the root `package.json`. The frontend's footer and the API documentation read it from there; never restate it elsewhere. A release is a git tag `v<version>` on the commit that sets it.
+
 ## Agent skills
 
 ### Issue tracker

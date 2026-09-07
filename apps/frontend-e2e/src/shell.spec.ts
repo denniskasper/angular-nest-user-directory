@@ -100,6 +100,9 @@ test.describe('app shell', () => {
     await expect(
       page.getByRole('navigation').getByRole('link', { name: 'Directory' }),
     ).toBeVisible();
+    // The footer names the release (AGENTS.md, Versioning): a semantic
+    // version, whichever one the manifest currently holds.
+    await expect(page.getByRole('contentinfo')).toContainText(/v\d+\.\d+\.\d+/);
 
     const viewport = page.viewportSize();
     const main = await page.getByRole('main').boundingBox();

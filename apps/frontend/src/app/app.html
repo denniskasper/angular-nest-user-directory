@@ -14,6 +14,12 @@
         class="nav__link"
         >Directory</a
       >
+      <a
+        routerLink="/users/new"
+        routerLinkActive="nav__link--active"
+        class="nav__link"
+        >Add a User</a
+      >
     </nav>
   </div>
   <span class="thread" aria-hidden="true"></span>
@@ -22,6 +28,8 @@
 <main class="content">
   <router-outlet />
 </main>
+
+<app-notice />
 
 <footer class="foot">
   <div class="foot__inner">

@@ -1,0 +1,16 @@
+<div class="region" role="status" aria-live="polite" aria-atomic="true">
+  @if (notices.current(); as notice) {
+  <div class="notice" [attr.data-tone]="notice.tone">
+    <span class="notice__mark" aria-hidden="true"></span>
+    <p class="notice__text">{{ notice.text }}</p>
+    <button
+      type="button"
+      class="notice__dismiss"
+      aria-label="Dismiss"
+      (click)="notices.dismiss()"
+    >
+      <span aria-hidden="true">×</span>
+    </button>
+  </div>
+  }
+</div>

@@ -20,6 +20,9 @@ export interface BootedApp {
  * through this and nothing lower — against a store in a fresh temporary
  * directory, so specs never touch the real data directory or each other.
  * Pass `dataDir` to boot again against a store an earlier boot wrote.
+ *
+ * The application listens on an ephemeral port, so requests made in
+ * parallel share one server rather than each starting and stopping it.
  */
 export async function bootApp(dataDir?: string): Promise<BootedApp> {
   const dir = dataDir ?? (await mkdtemp(join(tmpdir(), 'pdr-cloud-')));
@@ -28,7 +31,7 @@ export async function bootApp(dataDir?: string): Promise<BootedApp> {
     .useValue(join(dir, 'users.json'))
     .compile();
   const app = configureApp(moduleRef.createNestApplication());
-  await app.init();
+  await app.listen(0);
 
   return {
     app,

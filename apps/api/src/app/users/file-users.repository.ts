@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { storedUserSchema, User } from '@pdr-cloud/shared';
+import { CreateUser, storedUserSchema, User } from '@pdr-cloud/shared';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import seed from '../../assets/seed/users.json';
@@ -17,6 +17,11 @@ const storeSchema = z.array(storedUserSchema);
  * store as it is, validated against the stored schema (ADR-0001) so a
  * corrupt or hand-edited store fails at startup rather than serving
  * malformed Users. The Seed Data asset itself is only ever read.
+ *
+ * Every write runs through one queue, so two creations cannot interleave
+ * and the id assigned inside that queue cannot collide; each flush is
+ * written to a temporary file and moved into place, so an interrupted write
+ * cannot leave a partial store (spec.md, Persistence).
  */
 @Injectable()
 export class FileUsersRepository
@@ -25,6 +30,8 @@ export class FileUsersRepository
 {
   private readonly logger = new Logger(FileUsersRepository.name);
   private users: readonly User[] = [];
+  /** The tail of the write queue: each write waits for the one before it. */
+  private writes: Promise<unknown> = Promise.resolve();
 
   constructor(@Inject(USERS_STORE_PATH) private readonly storePath: string) {
     super();
@@ -50,6 +57,21 @@ export class FileUsersRepository
 
   async findById(id: number): Promise<User | undefined> {
     return this.users.find((user) => user.id === id);
+  }
+
+  create(input: CreateUser): Promise<User> {
+    const write = this.writes.then(async () => {
+      const id =
+        this.users.reduce((max, user) => Math.max(max, user.id), 0) + 1;
+      const user: User = { id, ...input };
+      const users = [...this.users, user];
+      await this.writeStore(users);
+      this.users = users;
+      return user;
+    });
+    // A failed write must not stall the queue behind it; the caller gets the rejection.
+    this.writes = write.catch(() => undefined);
+    return write;
   }
 
   /** The stored Users, or undefined when no store has been written yet. */

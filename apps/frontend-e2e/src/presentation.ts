@@ -2,10 +2,10 @@ import { Page, test } from '@playwright/test';
 
 /**
  * Whichever presentation of the Users the current viewport shows: the
- * stacked list on the phone project, the table on the desktop one.
+ * stacked list on the phone projects, the table on the desktop ones.
  */
 export function presentation(page: Page) {
-  const phone = test.info().project.name === 'phone';
+  const phone = test.info().project.name.startsWith('phone');
   const list = page.getByRole('list', { name: 'Users' });
   const table = page.getByRole('table', { name: 'Users' });
   return {

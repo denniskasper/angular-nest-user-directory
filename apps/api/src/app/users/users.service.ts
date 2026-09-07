@@ -1,5 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { fullName, User, UserPage, USERS_PAGE_SIZE } from '@pdr-cloud/shared';
+import {
+  CreateUser,
+  fullName,
+  User,
+  UserPage,
+  USERS_PAGE_SIZE,
+} from '@pdr-cloud/shared';
 import { ListUsersQuery } from './list-users-query';
 import { UsersRepository } from './users.repository';
 
@@ -36,5 +42,10 @@ export class UsersService {
     const user = await this.users.findById(id);
     if (!user) throw new NotFoundException(`No User with id ${id}`);
     return user;
+  }
+
+  /** Stores a new User — already validated against the creation schema — and returns it with its id. */
+  create(input: CreateUser): Promise<User> {
+    return this.users.create(input);
   }
 }

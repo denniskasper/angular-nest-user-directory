@@ -1,6 +1,13 @@
 import { Route } from '@angular/router';
 
 export const appRoutes: Route[] = [
+  // Declared before the list, whose detail child would otherwise read
+  // "new" as a User's id.
+  {
+    path: 'users/new',
+    loadComponent: () =>
+      import('./users/create-user-page').then((m) => m.CreateUserPage),
+  },
   {
     path: '',
     loadComponent: () =>

@@ -1,5 +1,18 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
-import { User, UserPage } from '@pdr-cloud/shared';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  CreateUser,
+  createUserSchema,
+  User,
+  UserPage,
+} from '@pdr-cloud/shared';
 import { ListUsersQuery, listUsersQuerySchema } from './list-users-query';
 import { UsersService } from './users.service';
 
@@ -25,5 +38,14 @@ export class UsersController {
   @Get(':id')
   get(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return this.users.findById(id);
+  }
+
+  /**
+   * Creates a User from a body validated against the shared creation schema —
+   * the same rules the form applies — assigns the next id and returns it.
+   */
+  @Post()
+  create(@Body({ schema: createUserSchema }) input: CreateUser): Promise<User> {
+    return this.users.create(input);
   }
 }

@@ -4,7 +4,7 @@
 
 **Blocked by:** 12
 
-**Status:** ready-for-human
+**Status:** done
 
 - [x] A `Dockerfile` builds both applications and produces an image holding only the API bundle, its runtime dependencies and the built frontend, running as an unprivileged user with a `HEALTHCHECK`
 - [x] The API serves the built frontend beside itself when told where it is: the SPA fallback for any page request outside `/api`, cache rules that differ between `index.html` and the hashed files, compression, and `nosniff`/`DENY` headers
@@ -12,7 +12,7 @@
 - [x] A smoke test runs against the built image and checks the layer the browser specs cannot see: the fallback, the cache rules, the compression, the headers and the API beside it
 - [x] `.github/workflows/ci.yml` runs types, lint, tests and build; the smoke test on the image; and the browser specs, and only then asks Dokploy to deploy, over the tailnet, on a push to `main`
 - [x] The README links the public URL and documents the image, the Dokploy setup and the check-then-ship arrangement
-- [ ] DNS record, Dokploy application, Tailscale access and the five repository secrets are in place, and the public URL passes `deploy/smoke-test.sh`
+- [x] DNS record, Dokploy application, Tailscale access and the five repository secrets are in place, and the public URL passes `deploy/smoke-test.sh`
 
 ## Notes for the implementer
 
@@ -34,4 +34,14 @@ Implemented. Verified against the acceptance criteria:
 
 Noted, not changed: an unknown route under `/api` such as `/api/nothing` answers with Express's default HTML "Cannot GET" page, not JSON, and did so before this ticket; the missing-User 404 is JSON because the controller throws it. The smoke test and the spec assert only that the page is not served there.
 
-**Open and only doable at the infrastructure:** the DNS record, the Dokploy application with its domain and volume, the Tailscale ACL and OAuth client, and the five repository secrets (`TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`, `DOKPLOY_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_APPLICATION_ID`), none of which exist for this repository yet (`gh secret list` is empty). All of it needs Cloudflare, Tailscale and the server. A wizard at `tmp/deploy-wizard.sh` (git-ignored, one run) walks through those steps in order and writes the secrets with `gh`. Until they exist, the `deploy` job fails at the tailnet step while the three checks before it run as they should. The ticket therefore stands on `ready-for-human`, as ticket 18 of narkose did at the same point.
+**Open and only doable at the infrastructure:** the DNS record, the Dokploy application with its domain and volume, the Tailscale ACL and OAuth client, and the five repository secrets (`TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`, `DOKPLOY_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_APPLICATION_ID`), none of which exist for this repository yet (`gh secret list` is empty). All of it needs Cloudflare, Tailscale and the server. A wizard at `tmp/deploy-wizard.sh` (git-ignored, one run) walks through those steps in order and writes the secrets with `gh`. Until they exist, the `deploy` job fails at the tailnet step while the three checks before it run as they should. The ticket therefore stood on `ready-for-human`, as ticket 18 of narkose did at the same point.
+
+## Checked at the deployment
+
+`user-directory.denniskasper.dev` is up. The infrastructure steps were done by hand through the wizard: the tailnet policy already carried `tag:ci` and a grant to the Dokploy host on port 3000 from the narkose setup, in the newer `grants` syntax; the existing OAuth client was reused; the A record points at the same server the zone's other records name, proxy off; the Dokploy application has its domain, the volume at `/data` and Auto Deploy off. Checked against the public URL, not the local container:
+
+- **All 18 smoke checks pass** over verified TLS and HTTP/2: the API root, all 100 Users, User 74 by its numeric id, a JSON 404, the docs, the page at `/`, `/users/7` and `/smiley`, the fallback staying out of `/api`, the bundle immutable and `index.html` `no-cache`, the bundle and the list gzipped, `nosniff` everywhere, no `X-Powered-By`.
+- **The deployed bundle is the committed one.** Its name, `main-KPQGDOG7.js`, is the same hash the local build of this tree produces.
+- **Both viewports in a real browser** (Playwright Chromium, Pixel 7 and Desktop Chrome): the deep link `/users/7` opens Sarah Russell's detail, full-screen on the phone and as a centred dialog over the list on the desktop; `/smiley` loads; no console errors, page errors or failed requests at either width.
+
+One thing the public URL caught that the local container could not: the smoke test matched the docs' status line as `http/1.1 200`, and behind Dokploy the line reads `HTTP/2 200`. The check now matches the status code alone.

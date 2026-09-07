@@ -90,47 +90,8 @@ $ease: motion.$ease;
 
 .state__retry {
   margin-left: 0.5rem;
-  min-height: var(--touch-target);
-  padding-inline: 1rem;
-  border: 0;
-  border-radius: var(--mat-sys-corner-full);
   background: var(--mat-sys-error);
   color: var(--mat-sys-on-error);
-  font: var(--mat-sys-label-large);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-// ---------------------------------------------------------------- shared ---
-// A Role reads as a small tinted seal. Each Role has its own tint, so the
-// column scans by colour before it is read.
-.role {
-  display: inline-flex;
-  align-items: center;
-  height: 1.75rem;
-  padding-inline: 0.75rem;
-  border-radius: var(--mat-sys-corner-full);
-  font: var(--mat-sys-label-medium);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: capitalize;
-  background: var(--mat-sys-surface-container-high);
-  color: var(--mat-sys-on-surface-variant);
-
-  &[data-role='admin'] {
-    background: var(--mat-sys-primary-container);
-    color: var(--mat-sys-on-primary-container);
-  }
-  &[data-role='editor'] {
-    background: var(--mat-sys-tertiary-container);
-    color: var(--mat-sys-on-tertiary-container);
-  }
-}
-
-// An absent value reads as absent: muted and named, never blank.
-.absent {
-  font-style: italic;
-  color: var(--mat-sys-outline);
 }
 
 // -------------------------------------------------------------- entries ---
@@ -150,6 +111,7 @@ $ease: motion.$ease;
 
 .entry {
   @include staggered-rise;
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:
@@ -162,6 +124,19 @@ $ease: motion.$ease;
   border-left: 3px solid var(--brand-primary);
   border-radius: var(--mat-sys-corner-medium);
   background: var(--mat-sys-surface-container-lowest);
+  transition:
+    border-color 160ms,
+    background-color 160ms;
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--brand-primary);
+    background: color-mix(
+      in oklab,
+      var(--brand-primary) 6%,
+      var(--mat-sys-surface-container-lowest)
+    );
+  }
 }
 
 .entry__id {
@@ -234,9 +209,11 @@ $ease: motion.$ease;
 
   tr.mat-mdc-row {
     @include staggered-rise;
+    position: relative;
     transition: background-color 160ms;
 
-    &:hover {
+    &:hover,
+    &:focus-within {
       background: color-mix(in oklab, var(--brand-primary) 8%, transparent);
     }
   }

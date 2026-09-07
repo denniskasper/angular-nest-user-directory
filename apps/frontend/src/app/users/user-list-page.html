@@ -13,7 +13,11 @@
   @if (users.error()) {
   <p class="state state--error" role="alert">
     The directory could not be loaded.
-    <button type="button" class="state__retry" (click)="users.reload()">
+    <button
+      type="button"
+      class="pill-button state__retry"
+      (click)="users.reload()"
+    >
       Try again
     </button>
   </p>
@@ -25,7 +29,14 @@
     @for (user of users.value(); track user.id; let i = $index) {
     <li class="entry" [style.--i]="i">
       <span class="entry__id">{{ user.id }}</span>
-      <h3 class="entry__name">{{ fullName(user) }}</h3>
+      <h3 class="entry__name">
+        <a
+          class="stretched"
+          [routerLink]="['users', user.id]"
+          queryParamsHandling="preserve"
+          >{{ fullName(user) }}</a
+        >
+      </h3>
       <p class="entry__email">
         @if (user.email) { {{ user.email }} } @else {
         <span class="absent">No email</span>
@@ -50,7 +61,12 @@
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Full Name</th>
       <td mat-cell *matCellDef="let user" class="table__name">
-        {{ fullName(user) }}
+        <a
+          class="stretched"
+          [routerLink]="['users', user.id]"
+          queryParamsHandling="preserve"
+          >{{ fullName(user) }}</a
+        >
       </td>
     </ng-container>
     <ng-container matColumnDef="email">
@@ -80,3 +96,6 @@
   </table>
   }
 </section>
+
+<!-- A selected User's detail opens here, over the list. -->
+<router-outlet />

@@ -1,3 +1,4 @@
+@use 'brand';
 @use 'breakpoints' as bp;
 @use 'motion';
 
@@ -47,18 +48,11 @@ $ease: motion.$ease;
   min-height: var(--shell-bar-height);
 }
 
-// The brand thread: a rule woven from the four brand colours, drawn in on
-// load. It is the one motif every page carries.
+// The brand thread, drawn in on load. It is the one motif every page carries.
 .thread {
+  @include brand.thread;
   display: block;
   height: 3px;
-  background: linear-gradient(
-    to right,
-    var(--brand-primary) 0 42%,
-    var(--brand-secondary) 42% 70%,
-    var(--brand-tertiary) 70% 90%,
-    var(--brand-error) 90% 100%
-  );
   transform-origin: left;
   animation: draw 900ms $ease both;
 }

@@ -1,0 +1,242 @@
+@use 'brand';
+@use 'breakpoints' as bp;
+@use 'motion';
+
+$ease: motion.$ease;
+
+// ---------------------------------------------------------------- sheet ---
+// Phone baseline: the dialog is the whole screen, a sheet that rises from
+// the bottom edge. Nothing about it is a box on a phone.
+.sheet {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  &[open] {
+    animation: sheet-rise 380ms $ease both;
+  }
+
+  &::backdrop {
+    background: color-mix(
+      in oklab,
+      var(--mat-sys-scrim, #000) 40%,
+      transparent
+    );
+    backdrop-filter: blur(6px) saturate(1.2);
+    animation: fade-in 240ms ease-out both;
+  }
+
+  // Tablet and wider: a centred card held at a reading width, lifted off
+  // the page by the scrim rather than a heavy shadow.
+  @include bp.up(tablet) {
+    width: min(34rem, calc(100vw - 3rem));
+    // With inset: 0, `auto` would stretch to the viewport; fit the content.
+    height: fit-content;
+    max-height: calc(100dvh - 3rem);
+    margin: auto;
+    border-radius: var(--mat-sys-corner-extra-large);
+    box-shadow: 0 24px 48px -16px
+      color-mix(in oklab, var(--mat-sys-on-surface) 30%, transparent);
+
+    &[open] {
+      animation: card-in 320ms $ease both;
+    }
+  }
+}
+
+// --------------------------------------------------------------- detail ---
+.detail {
+  position: relative;
+  padding: calc(var(--shell-gutter) + 0.5rem) var(--shell-gutter)
+    var(--shell-gutter);
+
+  @include bp.up(tablet) {
+    padding: 2rem 2.25rem 2.25rem;
+  }
+}
+
+.detail__thread {
+  @include brand.thread;
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+}
+
+.detail__head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'eyebrow close'
+    'title title';
+  gap: 0.25rem 1rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  animation: rise 500ms 80ms $ease both;
+}
+
+.detail__eyebrow {
+  grid-area: eyebrow;
+  align-self: center;
+  margin: 0;
+  font: var(--mat-sys-label-large);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mat-sys-secondary);
+}
+
+// The id, set as a figure in the brand serif so it reads as the record's
+// number rather than as prose.
+.detail__id {
+  font-family: 'Fraunces Variable', serif;
+  font-variation-settings:
+    'opsz' 72,
+    'SOFT' 60;
+  font-size: 1.125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-primary);
+}
+
+.detail__title {
+  grid-area: title;
+  font-size: clamp(1.875rem, 5vw + 0.5rem, 2.75rem);
+  line-height: 1.05;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.detail__title--absent {
+  font-variation-settings:
+    'opsz' 72,
+    'SOFT' 100,
+    'WONK' 1;
+  font-style: italic;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.detail__close {
+  grid-area: close;
+  display: inline-grid;
+  place-items: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  margin: -0.5rem -0.5rem 0 0;
+  border: 0;
+  border-radius: var(--mat-sys-corner-full);
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms,
+    color 160ms,
+    transform 300ms $ease;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+    transform: rotate(90deg);
+  }
+}
+
+// ---------------------------------------------------------------- facts ---
+// A ledger of label and value, ruled by hairlines. Labels sit small and
+// spaced; values carry the weight.
+.facts {
+  display: grid;
+  margin: 0;
+  animation: rise 500ms 160ms $ease both;
+}
+
+.fact {
+  display: grid;
+  gap: 0.125rem;
+  padding-block: 0.875rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  @include bp.up(tablet) {
+    grid-template-columns: 8rem 1fr;
+    align-items: baseline;
+    gap: 1rem;
+  }
+}
+
+.fact__label {
+  font: var(--mat-sys-label-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.fact__value {
+  margin: 0;
+  font: var(--mat-sys-body-large);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.fact__link {
+  color: var(--mat-sys-primary);
+  text-decoration-color: color-mix(in oklab, currentColor 40%, transparent);
+  text-underline-offset: 0.15em;
+}
+
+// ---------------------------------------------------------------- notes ---
+.detail__note {
+  margin: 0;
+  padding: 1.5rem 0 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  animation: rise 500ms 160ms $ease both;
+}
+
+.detail__retry {
+  margin-left: 0.5rem;
+}
+
+// --------------------------------------------------------------- motion ---
+@keyframes sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

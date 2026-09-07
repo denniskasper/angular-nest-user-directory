@@ -1,0 +1,100 @@
+<!-- The backdrop click is a pointer convenience only: Escape and the Close
+     button are its keyboard and focusable equivalents, so the dialog element
+     itself is not an interactive control. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #dialog
+  class="sheet"
+  aria-labelledby="user-detail-title"
+  (close)="onClosed()"
+  (click)="onBackdropClick($event)"
+>
+  <article class="detail">
+    <span class="detail__thread" aria-hidden="true"></span>
+
+    <header class="detail__head">
+      <p class="detail__eyebrow">
+        User <span class="detail__id">#{{ id() }}</span>
+      </p>
+
+      <h2
+        id="user-detail-title"
+        class="detail__title"
+        [class.detail__title--absent]="!user.hasValue()"
+      >
+        {{ title() }}
+      </h2>
+
+      <button
+        type="button"
+        class="detail__close"
+        aria-label="Close"
+        (click)="close()"
+      >
+        <span aria-hidden="true">×</span>
+      </button>
+    </header>
+
+    @if (user.hasValue()) {
+    <dl class="facts">
+      <div class="fact">
+        <dt class="fact__label">Email</dt>
+        <dd class="fact__value">
+          @if (user.value().email; as email) {
+          <a class="fact__link" href="mailto:{{ email }}">{{ email }}</a>
+          } @else {
+          <span class="absent">Not recorded</span>
+          }
+        </dd>
+      </div>
+      <div class="fact">
+        <dt class="fact__label">Phone number</dt>
+        <dd class="fact__value">
+          @if (user.value().phoneNumber; as phoneNumber) { {{ phoneNumber }} }
+          @else {
+          <span class="absent">Not recorded</span>
+          }
+        </dd>
+      </div>
+      <div class="fact">
+        <dt class="fact__label">Birth date</dt>
+        <dd class="fact__value">
+          @if (user.value().birthDate; as birthDate) {
+          <time [attr.datetime]="birthDate"
+            >{{ birthDate | date: 'longDate' }}</time
+          >
+          } @else {
+          <span class="absent">Not recorded</span>
+          }
+        </dd>
+      </div>
+      <div class="fact">
+        <dt class="fact__label">Role</dt>
+        <dd class="fact__value">
+          <span class="role" [attr.data-role]="user.value().role">
+            {{ user.value().role }}
+          </span>
+        </dd>
+      </div>
+    </dl>
+    } @else if (absent()) {
+    <p class="detail__note">
+      The directory has no User with this id. It may have been mistyped, or the
+      link may be out of date.
+    </p>
+    } @else if (broken()) {
+    <p class="detail__note" role="alert">
+      Something went wrong fetching this User.
+      <button
+        type="button"
+        class="pill-button detail__retry"
+        (click)="user.reload()"
+      >
+        Try again
+      </button>
+    </p>
+    } @else {
+    <p class="detail__note" role="status">Fetching the latest details…</p>
+    }
+  </article>
+</dialog>

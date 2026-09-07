@@ -7,4 +7,6 @@ import { User } from '@pdr-cloud/shared';
  */
 export abstract class UsersRepository {
   abstract findAll(): Promise<readonly User[]>;
+  /** The User holding `id`, or undefined when no User does. */
+  abstract findById(id: number): Promise<User | undefined>;
 }

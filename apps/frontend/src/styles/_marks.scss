@@ -1,0 +1,35 @@
+// Marks a User carries wherever they are shown — the list, the detail —
+// so a Role or an absent value reads the same everywhere.
+//
+//   @use 'marks';   (from styles.scss only; these are global classes)
+
+// A Role reads as a small tinted seal. Each Role has its own tint, so a
+// column of them scans by colour before it is read.
+.role {
+  display: inline-flex;
+  align-items: center;
+  height: 1.75rem;
+  padding-inline: 0.75rem;
+  border-radius: var(--mat-sys-corner-full);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+
+  &[data-role='admin'] {
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+  }
+  &[data-role='editor'] {
+    background: var(--mat-sys-tertiary-container);
+    color: var(--mat-sys-on-tertiary-container);
+  }
+}
+
+// An absent value reads as absent: muted and named, never blank.
+.absent {
+  font-style: italic;
+  color: var(--mat-sys-outline);
+}

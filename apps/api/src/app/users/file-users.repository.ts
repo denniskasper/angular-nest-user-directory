@@ -48,6 +48,10 @@ export class FileUsersRepository
     return this.users;
   }
 
+  async findById(id: number): Promise<User | undefined> {
+    return this.users.find((user) => user.id === id);
+  }
+
   /** The stored Users, or undefined when no store has been written yet. */
   private async readStore(): Promise<User[] | undefined> {
     let raw: string;

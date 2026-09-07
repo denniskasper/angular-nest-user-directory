@@ -54,6 +54,87 @@ describe('GET /api/users', () => {
   });
 });
 
+describe('GET /api/users?page=&search=', () => {
+  it('returns 25 Users per page together with the total', async () => {
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users?page=2',
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ total: 100, page: 2, pageSize: 25 });
+    expect(response.body.items).toHaveLength(25);
+    expect(response.body.items[0]).toMatchObject({
+      id: 26,
+      firstName: 'Heather',
+      lastName: 'Kidd',
+    });
+    expect(response.body.items[24]).toMatchObject({ id: 50 });
+  });
+
+  it('reports an empty page, with the total, beyond the last one', async () => {
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users?page=5',
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      items: [],
+      total: 100,
+      page: 5,
+      pageSize: 25,
+    });
+  });
+
+  it('matches a search across the first and last name joined by a space, ignoring case', async () => {
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users?search=SARAH%20r',
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ total: 1, page: 1 });
+    expect(response.body.items).toEqual([
+      expect.objectContaining({ id: 7, firstName: 'Sarah', lastName: 'Russell' }),
+    ]);
+  });
+
+  it('applies the search before paging, so the total counts matches', async () => {
+    // 29 of the 100 Full Names contain "an" (counted from the Seed Data);
+    // the second page of 25 therefore holds the remaining 4.
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users?search=an&page=2',
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ total: 29, page: 2 });
+    expect(response.body.items).toHaveLength(4);
+    for (const user of response.body.items) {
+      expect(`${user.firstName} ${user.lastName}`.toLowerCase()).toContain(
+        'an',
+      );
+    }
+  });
+
+  it('reports no matches for a search nothing contains', async () => {
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users?search=zz',
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ items: [], total: 0 });
+  });
+
+  it('rejects a page that is not a positive whole number', async () => {
+    for (const page of ['0', '-1', '1.5', 'two']) {
+      const response = await request(booted.app.getHttpServer()).get(
+        `/api/users?page=${page}`,
+      );
+
+      expect(response.status, `page=${page}`).toBe(400);
+      expect(response.body.message.join()).toContain('page');
+    }
+  });
+});
+
 describe('GET /api/users/:id', () => {
   it('returns the User holding that id', async () => {
     // User 74's id is text in the Seed Data; fetching it by number proves

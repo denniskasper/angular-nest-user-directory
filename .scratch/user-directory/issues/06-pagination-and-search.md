@@ -4,11 +4,23 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] 25 Users per page
-- [ ] Navigating between pages works, and the total number of matches is reported
-- [ ] Search matches a case-insensitive substring against the first and last name joined by a single space
-- [ ] Search is applied before paging, and the reported total reflects matches rather than the whole directory
-- [ ] Requesting the list with no paging or search parameters still returns the complete list
-- [ ] Pagination controls remain reachable and tappable at phone width without horizontal scrolling
+- [x] 25 Users per page
+- [x] Navigating between pages works, and the total number of matches is reported
+- [x] Search matches a case-insensitive substring against the first and last name joined by a single space
+- [x] Search is applied before paging, and the reported total reflects matches rather than the whole directory
+- [x] Requesting the list with no paging or search parameters still returns the complete list
+- [x] Pagination controls remain reachable and tappable at phone width without horizontal scrolling
+
+## Comments
+
+Implemented. Verified against the acceptance criteria:
+
+- `GET /api/users` still returns the complete list with no parameters. With `page` and/or `search` it returns a `UserPage` — `{ items, total, page, pageSize }` — with `pageSize` fixed at 25 (`USERS_PAGE_SIZE`, shared). The type lives in the shared module (`libs/shared/src/lib/user-page.ts`) because both applications consume it; the query schema (`apps/api/src/app/users/list-users-query.ts`) is the HTTP contract of that one endpoint and stays in the API.
+- Search matches a case-insensitive substring of `fullName()` and is applied before the page is cut, so `total` counts matches: `?search=an&page=2` reports 29 and carries the remaining 4. Both happen in `UsersService.findPage`, over the in-memory collection the repository already holds; nothing is loaded into the browser beyond one page.
+- The query is validated by Nest 12's own `StandardSchemaValidationPipe`, registered globally in `configure-app.ts` and fed by `@Query({ schema })` (ADR-0002: no bespoke validation layer). `page` is coerced to a positive whole number; anything else is a 400 naming `page`. Ticket 07's body validation and ticket 10's documentation use the same mechanism.
+- In the browser the page and search term live in the URL query (`?search=an&page=2`), bound to inputs by `withComponentInputBinding`, and the list `httpResource` derives from them. Paging and searching are therefore navigations: a URL reproduces what was on screen, Back works, and the detail route's `queryParamsHandling: 'preserve'` from ticket 05 keeps them across open and dismiss. Typing is debounced 250 ms and replaces the URL rather than pushing it, so Back steps over the typing; a new search starts from page 1. The field is written from the URL only while it is not focused, so a settled search landing in the URL cannot overwrite what has been typed since.
+- The last page received is held in a `linkedSignal` while the next loads, so moving between pages dims the list (`aria-busy`) rather than blanking it to "Loading Users…"; the header figure reports the total matches ("29 matches", "1 match", or "100 Users" without a search); no match reads as "No User's Full Name contains “zz”."
+- The pager is Previous / "Page N of M" / Next with "Showing 26–50 of 100". On phones it is sticky at the bottom of the screen, frosted like the app bar and bled into the gutters, so it is reachable wherever browsing is; from tablet up it rests after the table. The buttons are the global `.pill-button` in a new outlined `--quiet` variant, 44 px tall. Paging brings the list top back into view when browsing had scrolled past it.
+- Tests: Seam 2 `apps/api/src/app/users/users.spec.ts` (a page of 25 with the total, an empty page beyond the last, search across first and last name ignoring case, search before paging, no matches, 400 for a bad page). Seam 3: `apps/frontend-e2e/src/list.spec.ts` now lists 25, pages to the second, checks the pager is visible and at least 44 px tall within the viewport at phone width with no horizontal scroll, and opens User 74 from page 3 with the page surviving the round trip; new `apps/frontend-e2e/src/search.spec.ts` narrows, pages the matches, resets the page on a new search, clears, and reproduces a search and page from the URL. That is the second of the four browser specs the spec asks for.

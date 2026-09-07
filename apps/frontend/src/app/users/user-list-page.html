@@ -2,12 +2,26 @@
   <header class="directory__head">
     <p class="directory__eyebrow">Directory</p>
     <h2 id="directory-title" class="directory__title">Every User, by Role.</h2>
-    @if (users.hasValue()) {
+    @if (shown(); as shown) {
     <p class="directory__count">
-      <span class="directory__figure">{{ users.value().length }}</span>
-      Users
+      <span class="directory__figure">{{ shown.total }}</span>
+      @if (term()) { {{ shown.total === 1 ? 'match' : 'matches' }} } @else {
+      Users }
     </p>
     }
+    <search class="search">
+      <label class="search__label" for="search">Search by Full Name</label>
+      <input
+        #searchField
+        id="search"
+        class="search__input"
+        type="search"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Type any part of a name…"
+        (input)="onTyped(searchField.value)"
+      />
+    </search>
   </header>
 
   @if (users.error()) {
@@ -21,79 +35,114 @@
       Try again
     </button>
   </p>
-  } @else if (users.isLoading()) {
-  <p class="state" role="status">Loading Users…</p>
-  } @else if (users.hasValue()) {
-  <!-- Phone: one stacked entry per User. -->
-  <ul class="entries" aria-label="Users">
-    @for (user of users.value(); track user.id; let i = $index) {
-    <li class="entry" [style.--i]="i">
-      <span class="entry__id">{{ user.id }}</span>
-      <h3 class="entry__name">
-        <a
-          class="stretched"
-          [routerLink]="['users', user.id]"
-          queryParamsHandling="preserve"
-          >{{ fullName(user) }}</a
-        >
-      </h3>
-      <p class="entry__email">
-        @if (user.email) { {{ user.email }} } @else {
-        <span class="absent">No email</span>
-        }
-      </p>
-      <span class="role" [attr.data-role]="user.role">{{ user.role }}</span>
-    </li>
-    }
-  </ul>
-
-  <!-- Tablet and wider: the tabular presentation. -->
-  <table
-    mat-table
-    [dataSource]="users.value()"
-    class="table"
-    aria-label="Users"
-  >
-    <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef class="table__id">Id</th>
-      <td mat-cell *matCellDef="let user" class="table__id">{{ user.id }}</td>
-    </ng-container>
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Full Name</th>
-      <td mat-cell *matCellDef="let user" class="table__name">
-        <a
-          class="stretched"
-          [routerLink]="['users', user.id]"
-          queryParamsHandling="preserve"
-          >{{ fullName(user) }}</a
-        >
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="email">
-      <th mat-header-cell *matHeaderCellDef>Email</th>
-      <td mat-cell *matCellDef="let user" class="table__email">
-        @if (user.email) { {{ user.email }} } @else {
-        <span class="absent absent--dash">
-          <span class="sr-only">No email</span>
-          <span aria-hidden="true">—</span>
-        </span>
-        }
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="role">
-      <th mat-header-cell *matHeaderCellDef>Role</th>
-      <td mat-cell *matCellDef="let user">
+  } @else if (shown(); as shown) { @if (shown.items.length === 0) {
+  <p class="state" role="status">
+    @if (term()) { No User’s Full Name contains “{{ term() }}”. } @else { There
+    are no Users on this page. }
+  </p>
+  } @else {
+  <div class="directory__body" #body [attr.aria-busy]="users.isLoading()">
+    <!-- Phone: one stacked entry per User. -->
+    <ul class="entries" aria-label="Users">
+      @for (user of shown.items; track user.id; let i = $index) {
+      <li class="entry" [style.--i]="i">
+        <span class="entry__id">{{ user.id }}</span>
+        <h3 class="entry__name">
+          <a
+            class="stretched"
+            [routerLink]="['users', user.id]"
+            queryParamsHandling="preserve"
+            >{{ fullName(user) }}</a
+          >
+        </h3>
+        <p class="entry__email">
+          @if (user.email) { {{ user.email }} } @else {
+          <span class="absent">No email</span>
+          }
+        </p>
         <span class="role" [attr.data-role]="user.role">{{ user.role }}</span>
-      </td>
-    </ng-container>
+      </li>
+      }
+    </ul>
 
-    <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
-    <tr
-      mat-row
-      *matRowDef="let user; columns: columns; let i = index"
-      [style.--i]="i"
-    ></tr>
-  </table>
+    <!-- Tablet and wider: the tabular presentation. -->
+    <table
+      mat-table
+      [dataSource]="shown.items"
+      class="table"
+      aria-label="Users"
+    >
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef class="table__id">Id</th>
+        <td mat-cell *matCellDef="let user" class="table__id">{{ user.id }}</td>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Full Name</th>
+        <td mat-cell *matCellDef="let user" class="table__name">
+          <a
+            class="stretched"
+            [routerLink]="['users', user.id]"
+            queryParamsHandling="preserve"
+            >{{ fullName(user) }}</a
+          >
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let user" class="table__email">
+          @if (user.email) { {{ user.email }} } @else {
+          <span class="absent absent--dash">
+            <span class="sr-only">No email</span>
+            <span aria-hidden="true">—</span>
+          </span>
+          }
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="role">
+        <th mat-header-cell *matHeaderCellDef>Role</th>
+        <td mat-cell *matCellDef="let user">
+          <span class="role" [attr.data-role]="user.role">{{ user.role }}</span>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
+      <tr
+        mat-row
+        *matRowDef="let user; columns: columns; let i = index"
+        [style.--i]="i"
+      ></tr>
+    </table>
+  </div>
+  } @if (pageCount() > 1) {
+  <nav class="pager" aria-label="Pagination">
+    <p class="pager__status" role="status">
+      @if (range(); as range) { Showing
+      <b>{{ range.from }}–{{ range.to }}</b> of {{ shown.total }} }
+    </p>
+    <div class="pager__controls">
+      <button
+        type="button"
+        class="pill-button pill-button--quiet pager__previous"
+        [disabled]="shown.page <= 1"
+        (click)="goTo(shown.page - 1)"
+      >
+        Previous
+      </button>
+      <span class="pager__page">
+        Page <b>{{ shown.page }}</b> of {{ pageCount() }}
+      </span>
+      <button
+        type="button"
+        class="pill-button pill-button--quiet pager__next"
+        [disabled]="shown.page >= pageCount()"
+        (click)="goTo(shown.page + 1)"
+      >
+        Next
+      </button>
+    </div>
+  </nav>
+  } } @else {
+  <p class="state" role="status">Loading Users…</p>
   }
 </section>
 

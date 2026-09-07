@@ -71,6 +71,68 @@ $ease: motion.$ease;
   }
 }
 
+// --------------------------------------------------------------- search ---
+// The search is a ruled line under the title, written in the brand serif:
+// a name entered on the ledger, not a boxed control. The rule thickens and
+// takes the brand colour while it holds focus.
+.search {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+
+  @include bp.up(tablet) {
+    grid-column: 1 / -1;
+    max-width: 36rem;
+    margin-top: 0.5rem;
+  }
+}
+
+.search__label {
+  font: var(--mat-sys-label-large);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.search__input {
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0.125rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0;
+  background: transparent;
+  color: var(--mat-sys-on-surface);
+  font-family: 'Fraunces Variable', serif;
+  font-variation-settings:
+    'opsz' 36,
+    'SOFT' 100;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  transition:
+    border-color 160ms,
+    box-shadow 160ms;
+
+  &::placeholder {
+    font-style: italic;
+    color: var(--mat-sys-outline);
+  }
+
+  &:hover {
+    border-bottom-color: var(--mat-sys-outline);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-bottom-color: var(--brand-primary);
+    box-shadow: 0 1px 0 var(--brand-primary);
+  }
+
+  @include bp.up(tablet) {
+    font-size: 1.75rem;
+  }
+}
+
 // --------------------------------------------------------------- states ---
 .state {
   margin: 0;
@@ -92,6 +154,18 @@ $ease: motion.$ease;
   margin-left: 0.5rem;
   background: var(--mat-sys-error);
   color: var(--mat-sys-on-error);
+}
+
+// ----------------------------------------------------------------- body ---
+// While the next page loads the current one dims in place rather than
+// blinking away. Paging back to the top stops short of the app bar.
+.directory__body {
+  scroll-margin-top: calc(var(--shell-bar-height) + 0.75rem);
+  transition: opacity 160ms;
+
+  &[aria-busy='true'] {
+    opacity: 0.55;
+  }
 }
 
 // -------------------------------------------------------------- entries ---
@@ -232,4 +306,89 @@ $ease: motion.$ease;
 .table__email {
   color: var(--mat-sys-on-surface-variant);
   overflow-wrap: anywhere;
+}
+
+// ---------------------------------------------------------------- pager ---
+// Phone baseline: the pager holds the bottom of the screen, frosted like the
+// app bar and bled into the gutters, so the next page is always a thumb
+// away without scrolling to the end of the current one. From tablet up it
+// rests in the flow after the table.
+.pager {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem calc(-1 * var(--shell-gutter)) 0;
+  padding: 0.75rem var(--shell-gutter)
+    max(0.75rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  background: color-mix(in oklab, var(--mat-sys-surface) 86%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  animation: rise 480ms 200ms $ease both;
+
+  @include bp.up(tablet) {
+    position: static;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    margin: 0;
+    padding: 1.25rem 0 0;
+    border-top: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+}
+
+.pager__status {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
+
+  b {
+    font-weight: 600;
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+// Previous, the page figure, Next — the figure centred, the buttons at the
+// edges where thumbs rest.
+.pager__controls {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+
+  @include bp.up(tablet) {
+    grid-template-columns: auto auto auto;
+  }
+}
+
+.pager__previous {
+  justify-self: start;
+}
+
+.pager__next {
+  justify-self: end;
+}
+
+.pager__page {
+  font: var(--mat-sys-label-large);
+  white-space: nowrap;
+  color: var(--mat-sys-on-surface-variant);
+
+  b {
+    display: inline-block;
+    min-width: 1.5ch;
+    font-family: 'Fraunces Variable', serif;
+    font-variation-settings:
+      'opsz' 72,
+      'SOFT' 60;
+    font-weight: 500;
+    font-size: 1.375rem;
+    line-height: 1;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--mat-sys-primary);
+  }
 }

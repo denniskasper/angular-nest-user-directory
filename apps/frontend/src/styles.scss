@@ -150,6 +150,31 @@ a {
   cursor: pointer;
 }
 
+// The quiet variant: outlined rather than filled, for movement rather than
+// action — paging, cancelling, going back.
+.pill-button--quiet {
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-lowest);
+  color: var(--mat-sys-on-surface);
+  transition:
+    border-color 160ms,
+    background-color 160ms;
+
+  &:hover:not(:disabled) {
+    border-color: var(--brand-primary);
+    background: color-mix(
+      in oklab,
+      var(--brand-primary) 8%,
+      var(--mat-sys-surface-container-lowest)
+    );
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
 // Text for assistive technology only: rendered, but taken out of the
 // visual flow.
 .sr-only {

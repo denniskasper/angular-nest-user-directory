@@ -163,14 +163,35 @@ $ease: motion.$ease;
 
 // The classic: a box with only its bottom edge stroked, whose corners are
 // rounded far enough that the stroke becomes a bowl and thins to nothing
-// at either end.
+// at either end. The dimples are the box's two pseudo-elements, laid out
+// as flex items at its top corners — which is exactly where the stroke
+// runs out — so they need no positioning of their own.
 .mouth {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
   width: 48cqi;
   height: 22cqi;
   border-bottom: 6cqi solid var(--ink);
   border-radius: 0 0 50% 50% / 0 0 100% 100%;
   transform-origin: 50% 0;
   animation: smile 700ms 560ms $ease both;
+
+  &::before,
+  &::after {
+    content: '';
+    width: 4cqi;
+    height: 4cqi;
+    margin-top: -1cqi;
+    border-radius: 50%;
+    background: var(--ink);
+  }
+  &::before {
+    margin-left: -3cqi;
+  }
+  &::after {
+    margin-right: -3cqi;
+  }
 }
 
 // -------------------------------------------------------------- caption ---

@@ -276,8 +276,9 @@ Data, Legacy Record, Normalization) is in `CONTEXT.md`. In brief:
   full-screen surface on phones and a centred dialog from tablet up.
   Breakpoints are defined once in `_breakpoints.scss`.
 - **Smiley.** `/smiley` is a standalone component built from Flexbox and
-  Grid only: no absolute positioning, no images, no SVG. It scales with the
-  viewport and uses the brand palette.
+  Grid only: no absolute positioning, no images, no SVG. Its dimples are
+  the mouth's two pseudo-elements, laid out as flex items. It scales with
+  the viewport and uses the brand palette.
 
 ## Tests
 

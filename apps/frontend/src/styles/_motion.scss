@@ -1,0 +1,17 @@
+// Motion shared by every view: the one easing curve and the one entrance
+// the shell and its pages use, so they read as a single choreography.
+//
+//   @use 'motion';
+//   .thing { animation: rise 600ms motion.$ease both; }
+$ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

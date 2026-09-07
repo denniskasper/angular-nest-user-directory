@@ -1,0 +1,258 @@
+@use 'breakpoints' as bp;
+@use 'motion';
+
+$ease: motion.$ease;
+
+// Rows and entries rise in as the list arrives; the delay is capped so a
+// long page never keeps its tail waiting.
+@mixin staggered-rise {
+  animation: rise 480ms $ease both;
+  animation-delay: calc(min(var(--i, 0), 14) * 28ms);
+}
+
+// ----------------------------------------------------------------- head ---
+.directory__head {
+  display: grid;
+  gap: 0.5rem;
+  padding-block: 1.5rem 1.75rem;
+  animation: rise 600ms 120ms $ease both;
+
+  @include bp.up(tablet) {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    padding-block: 2.5rem 2rem;
+  }
+}
+
+.directory__eyebrow {
+  margin: 0;
+  font: var(--mat-sys-label-large);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mat-sys-secondary);
+}
+
+.directory__title {
+  font-size: clamp(2rem, 3.5vw + 1rem, 3.5rem);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+// The tally sits as a figure — Fraunces at display size, the label small
+// beside it — so the size of the directory reads at a glance.
+.directory__count {
+  margin: 0.25rem 0 0;
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+
+  @include bp.up(tablet) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin: 0;
+    text-align: right;
+  }
+}
+
+.directory__figure {
+  display: inline-block;
+  margin-right: 0.35rem;
+  font-family: 'Fraunces Variable', serif;
+  font-variation-settings:
+    'opsz' 72,
+    'SOFT' 60;
+  font-weight: 500;
+  font-size: 2rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-primary);
+
+  @include bp.up(tablet) {
+    font-size: 2.75rem;
+  }
+}
+
+// --------------------------------------------------------------- states ---
+.state {
+  margin: 0;
+  padding: 2rem 1rem;
+  border: 1px dashed var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-large);
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.state--error {
+  border-style: solid;
+  border-color: var(--mat-sys-error);
+  color: var(--mat-sys-on-error-container);
+  background: var(--mat-sys-error-container);
+}
+
+.state__retry {
+  margin-left: 0.5rem;
+  min-height: var(--touch-target);
+  padding-inline: 1rem;
+  border: 0;
+  border-radius: var(--mat-sys-corner-full);
+  background: var(--mat-sys-error);
+  color: var(--mat-sys-on-error);
+  font: var(--mat-sys-label-large);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+// ---------------------------------------------------------------- shared ---
+// A Role reads as a small tinted seal. Each Role has its own tint, so the
+// column scans by colour before it is read.
+.role {
+  display: inline-flex;
+  align-items: center;
+  height: 1.75rem;
+  padding-inline: 0.75rem;
+  border-radius: var(--mat-sys-corner-full);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+
+  &[data-role='admin'] {
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+  }
+  &[data-role='editor'] {
+    background: var(--mat-sys-tertiary-container);
+    color: var(--mat-sys-on-tertiary-container);
+  }
+}
+
+// An absent value reads as absent: muted and named, never blank.
+.absent {
+  font-style: italic;
+  color: var(--mat-sys-outline);
+}
+
+// -------------------------------------------------------------- entries ---
+// Phone baseline: a ledger of stacked entries. Id sits as a small numeral
+// on the right; name, email and Role fall in below it.
+.entries {
+  display: grid;
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include bp.up(tablet) {
+    display: none;
+  }
+}
+
+.entry {
+  @include staggered-rise;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'name id'
+    'email email'
+    'role role';
+  gap: 0.25rem 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-left: 3px solid var(--brand-primary);
+  border-radius: var(--mat-sys-corner-medium);
+  background: var(--mat-sys-surface-container-lowest);
+}
+
+.entry__id {
+  grid-area: id;
+  font: var(--mat-sys-label-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
+
+  &::before {
+    content: '#';
+    opacity: 0.6;
+  }
+}
+
+.entry__name {
+  grid-area: name;
+  font-variation-settings: normal;
+  font: var(--mat-sys-title-medium);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.entry__email {
+  grid-area: email;
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.entry .role {
+  grid-area: role;
+  justify-self: start;
+  margin-top: 0.375rem;
+}
+
+// ---------------------------------------------------------------- table ---
+// Tablet and wider: the table proper, ruled by hairlines rather than boxes.
+.table {
+  display: none;
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+
+  @include bp.up(tablet) {
+    display: table;
+  }
+
+  th,
+  td {
+    padding-inline: 0.75rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    text-align: left;
+
+    &:first-child {
+      padding-left: 0.5rem;
+    }
+    &:last-child {
+      padding-right: 0.5rem;
+    }
+  }
+
+  th {
+    font: var(--mat-sys-label-large);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--mat-sys-on-surface-variant);
+    background: var(--mat-sys-surface);
+  }
+
+  tr.mat-mdc-row {
+    @include staggered-rise;
+    transition: background-color 160ms;
+
+    &:hover {
+      background: color-mix(in oklab, var(--brand-primary) 8%, transparent);
+    }
+  }
+}
+
+.table__id {
+  width: 4rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.table__name {
+  font-weight: 600;
+}
+
+.table__email {
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}

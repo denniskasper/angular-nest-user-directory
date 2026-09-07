@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { USER_ROLES } from '@pdr-cloud/shared';
 import request from 'supertest';
 import { AppModule } from './app.module';
+import { configureApp } from './configure-app';
 
 describe('GET /api', () => {
   let app: INestApplication;
@@ -11,8 +12,7 @@ describe('GET /api', () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-    app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api');
+    app = configureApp(moduleRef.createNestApplication());
     await app.init();
   });
 

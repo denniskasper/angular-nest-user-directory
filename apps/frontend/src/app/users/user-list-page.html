@@ -1,0 +1,82 @@
+<section class="directory" aria-labelledby="directory-title">
+  <header class="directory__head">
+    <p class="directory__eyebrow">Directory</p>
+    <h2 id="directory-title" class="directory__title">Every User, by Role.</h2>
+    @if (users.hasValue()) {
+    <p class="directory__count">
+      <span class="directory__figure">{{ users.value().length }}</span>
+      Users
+    </p>
+    }
+  </header>
+
+  @if (users.error()) {
+  <p class="state state--error" role="alert">
+    The directory could not be loaded.
+    <button type="button" class="state__retry" (click)="users.reload()">
+      Try again
+    </button>
+  </p>
+  } @else if (users.isLoading()) {
+  <p class="state" role="status">Loading Users…</p>
+  } @else if (users.hasValue()) {
+  <!-- Phone: one stacked entry per User. -->
+  <ul class="entries" aria-label="Users">
+    @for (user of users.value(); track user.id; let i = $index) {
+    <li class="entry" [style.--i]="i">
+      <span class="entry__id">{{ user.id }}</span>
+      <h3 class="entry__name">{{ fullName(user) }}</h3>
+      <p class="entry__email">
+        @if (user.email) { {{ user.email }} } @else {
+        <span class="absent">No email</span>
+        }
+      </p>
+      <span class="role" [attr.data-role]="user.role">{{ user.role }}</span>
+    </li>
+    }
+  </ul>
+
+  <!-- Tablet and wider: the tabular presentation. -->
+  <table
+    mat-table
+    [dataSource]="users.value()"
+    class="table"
+    aria-label="Users"
+  >
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef class="table__id">Id</th>
+      <td mat-cell *matCellDef="let user" class="table__id">{{ user.id }}</td>
+    </ng-container>
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Full Name</th>
+      <td mat-cell *matCellDef="let user" class="table__name">
+        {{ fullName(user) }}
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef>Email</th>
+      <td mat-cell *matCellDef="let user" class="table__email">
+        @if (user.email) { {{ user.email }} } @else {
+        <span class="absent absent--dash">
+          <span class="sr-only">No email</span>
+          <span aria-hidden="true">—</span>
+        </span>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="role">
+      <th mat-header-cell *matHeaderCellDef>Role</th>
+      <td mat-cell *matCellDef="let user">
+        <span class="role" [attr.data-role]="user.role">{{ user.role }}</span>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
+    <tr
+      mat-row
+      *matRowDef="let user; columns: columns; let i = index"
+      [style.--i]="i"
+    ></tr>
+  </table>
+  }
+</section>

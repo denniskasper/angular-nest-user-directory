@@ -7,7 +7,7 @@ that both consume.
 ```
 apps/frontend   Angular 22 + Angular Material, zoneless
 apps/api        NestJS 12
-libs/shared     the module both applications consume (Role vocabulary so far)
+libs/shared     the module both applications consume (Role vocabulary, User schema)
 ```
 
 ## Requirements
@@ -45,6 +45,17 @@ npm test            # unit and HTTP-level tests (vitest)
 npm run e2e         # browser tests (Playwright, needs `npx playwright install chromium`)
 npm run build
 ```
+
+## API
+
+| Route            | Returns                     |
+| ---------------- | --------------------------- |
+| `GET /api/users` | every User, as a JSON array |
+
+The Seed Data (the 100 Users from the challenge) is committed as an
+application asset at `apps/api/src/assets/seed/users.json` and served as-is
+for now; Normalization of its malformed records is a later ticket, so a few
+Legacy Records still carry misspelled field names and text ids.
 
 ## Theme and layout
 

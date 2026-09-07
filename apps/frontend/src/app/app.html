@@ -21,15 +21,6 @@
 
 <main class="content">
   <router-outlet />
-  <section class="welcome" aria-label="About the directory">
-    <p class="welcome__eyebrow">A register of Users</p>
-    <h2 class="welcome__title">Every User, by Role.</h2>
-    <ul class="welcome__roles">
-      @for (role of roles; track role) {
-      <li class="chip">{{ role }}</li>
-      }
-    </ul>
-  </section>
 </main>
 
 <footer class="foot">

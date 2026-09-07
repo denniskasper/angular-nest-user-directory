@@ -5,3 +5,6 @@
 /.nx/workspace-data
 package-lock.json
 .angular
+
+# The Seed Data is committed verbatim; never reformat it.
+apps/api/src/assets/seed/

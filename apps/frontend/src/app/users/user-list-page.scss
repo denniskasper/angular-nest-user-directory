@@ -24,12 +24,6 @@ $ease: motion.$ease;
   }
 }
 
-.directory__title {
-  font-size: clamp(2rem, 3.5vw + 1rem, 3.5rem);
-  line-height: 1.02;
-  text-wrap: balance;
-}
-
 // The tally sits as a figure — Fraunces at display size, the label small
 // beside it — so the size of the directory reads at a glance.
 .directory__count {
@@ -312,8 +306,7 @@ $ease: motion.$ease;
   display: grid;
   gap: 0.5rem;
   margin: 1rem calc(-1 * var(--shell-gutter)) 0;
-  padding: 0.75rem var(--shell-gutter)
-    max(0.75rem, env(safe-area-inset-bottom));
+  padding: 0.75rem var(--shell-gutter) max(0.75rem, env(safe-area-inset-bottom));
   border-top: 1px solid var(--mat-sys-outline-variant);
   background: color-mix(in oklab, var(--mat-sys-surface) 86%, transparent);
   backdrop-filter: blur(14px) saturate(1.4);

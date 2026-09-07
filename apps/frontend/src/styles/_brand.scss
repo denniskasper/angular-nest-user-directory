@@ -15,14 +15,16 @@ $error: #d32f55;
   --brand-error: #{$error};
 }
 
-// The brand thread: a rule woven from the four brand colours. The shell
-// draws it under the app bar; the detail draws it along its top edge.
+// The brand thread: a rule woven from the four brand colours in these
+// proportions. The shell draws it under the app bar, the detail along its
+// top edge, and the smiley winds it into a ring.
+$thread-stops: (
+  var(--brand-primary) 0 42%,
+  var(--brand-secondary) 42% 70%,
+  var(--brand-tertiary) 70% 90%,
+  var(--brand-error) 90% 100%
+);
+
 @mixin thread {
-  background: linear-gradient(
-    to right,
-    var(--brand-primary) 0 42%,
-    var(--brand-secondary) 42% 70%,
-    var(--brand-tertiary) 70% 90%,
-    var(--brand-error) 90% 100%
-  );
+  background: linear-gradient(to right, $thread-stops);
 }

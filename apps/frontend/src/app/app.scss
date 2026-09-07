@@ -3,6 +3,7 @@
 @use 'motion';
 
 $ease: motion.$ease;
+$nav-link-pad: 0.875rem;
 
 // The shell's single column: full width with gutters on phones, held at a
 // reading width and centred once the viewport is wider than that.
@@ -134,7 +135,7 @@ $ease: motion.$ease;
   gap: 0.25rem;
   // Its own row on phones, the link text flush with the brand mark.
   flex-basis: 100%;
-  margin-inline-start: -0.875rem;
+  margin-inline-start: -$nav-link-pad;
   animation: rise 600ms 220ms $ease both;
 
   @include bp.up(tablet) {
@@ -147,7 +148,7 @@ $ease: motion.$ease;
   display: inline-flex;
   align-items: center;
   min-height: var(--touch-target);
-  padding-inline: 0.875rem;
+  padding-inline: $nav-link-pad;
   border-radius: var(--mat-sys-corner-full);
   font: var(--mat-sys-label-large);
   font-weight: 600;

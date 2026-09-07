@@ -52,15 +52,27 @@ function bodyBackground(page: Page): Promise<string> {
   return page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 }
 
+async function expectBrandColoursPainted(page: Page) {
+  const painted = await renderedColours(page);
+  for (const [name, value] of Object.entries(BRAND_COLOURS)) {
+    expect(painted, `${name} ${value} should be painted`).toContain(value);
+  }
+}
+
+/** At no width should the page scroll sideways. */
+async function expectNoSidewaysScroll(page: Page) {
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('the viewport must exist');
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(viewport.width);
+}
+
 test.describe('brand theme', () => {
   test('paints all four brand colours', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-
-    const painted = await renderedColours(page);
-    for (const [name, value] of Object.entries(BRAND_COLOURS)) {
-      expect(painted, `${name} ${value} should be painted`).toContain(value);
-    }
+    await expectBrandColoursPainted(page);
   });
 
   test('follows the system colour scheme', async ({ page }) => {
@@ -103,11 +115,7 @@ test.describe('app shell', () => {
       expect(main.x).toBeGreaterThan(0);
       expect(main.x + main.width).toBeLessThan(viewport.width);
     }
-    // At no width should the page scroll sideways.
-    const scrollWidth = await page.evaluate(
-      () => document.documentElement.scrollWidth,
-    );
-    expect(scrollWidth).toBeLessThanOrEqual(viewport.width);
+    await expectNoSidewaysScroll(page);
   });
 });
 
@@ -115,8 +123,11 @@ test.describe('smiley', () => {
   /**
    * Everything a smiley drawn from layout alone must not contain: anything
    * pinned out of flow, any image or vector element, any asset painted in.
+   * The one place the suite reads computed style: how the smiley is built
+   * is itself the requirement (spec.md, Smiley), and construction is only
+   * observable through the styles the browser resolved.
    */
-  function materials(page: Page) {
+  function forbiddenMaterials(page: Page) {
     return page.getByRole('main').evaluate((main) => {
       const pinned: string[] = [];
       const assets: string[] = [];
@@ -165,7 +176,7 @@ test.describe('smiley', () => {
     await expect(face).toBeVisible();
 
     // Layout primitives only: nothing pinned, no image, no vector.
-    expect(await materials(page)).toEqual({
+    expect(await forbiddenMaterials(page)).toEqual({
       pinned: [],
       assets: [],
       painted: [],
@@ -176,10 +187,7 @@ test.describe('smiley', () => {
     expect(
       await face.evaluate((el) => getComputedStyle(el).backgroundColor),
     ).toBe(BRAND_COLOURS.tertiary);
-    const rendered = await renderedColours(page);
-    for (const [name, value] of Object.entries(BRAND_COLOURS)) {
-      expect(rendered, `${name} ${value} should be painted`).toContain(value);
-    }
+    await expectBrandColoursPainted(page);
 
     // Scales with the viewport: round, within the screen, and larger on a
     // large desktop than on the narrowest common phone.
@@ -193,9 +201,7 @@ test.describe('smiley', () => {
       expect(box.width).toBeGreaterThanOrEqual(
         Math.min(viewport.width, viewport.height) * 0.5,
       );
-      expect(
-        await page.evaluate(() => document.documentElement.scrollWidth),
-      ).toBeLessThanOrEqual(viewport.width);
+      await expectNoSidewaysScroll(page);
       return box.width;
     }
 

@@ -136,6 +136,31 @@ a {
   }
 }
 
+// A page's headline: Fraunces at display size, one word set in the italic
+// for emphasis. Every routed page opens with one.
+.page-title {
+  font-size: clamp(2rem, 3.5vw + 1rem, 3.5rem);
+  line-height: 1.02;
+  text-wrap: balance;
+
+  em {
+    font-style: italic;
+    font-variation-settings:
+      'opsz' 72,
+      'SOFT' 100,
+      'WONK' 1;
+    color: var(--mat-sys-primary);
+  }
+}
+
+// The line under a headline that says what the page is for.
+.lede {
+  max-width: 36rem;
+  margin: 0.25rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  text-wrap: pretty;
+}
+
 // A running title: the small, spaced line in the secondary brand colour
 // that heads a page, a section or a record.
 .eyebrow {

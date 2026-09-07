@@ -1,3 +1,4 @@
+@use 'brand';
 @use 'breakpoints' as bp;
 @use 'motion';
 
@@ -8,7 +9,7 @@ $ease: motion.$ease;
   // cast of the primary, and a blush of the error colour warmed on the
   // tertiary. Neither follows the colour scheme — the face is the same
   // face in the dark.
-  --ink: color-mix(in oklab, var(--brand-primary) 18%, #14161c);
+  --ink: color-mix(in oklab, var(--brand-primary) 18%, black);
   --blush: color-mix(in oklab, var(--brand-error) 62%, var(--brand-tertiary));
 }
 
@@ -35,28 +36,6 @@ $ease: motion.$ease;
   display: grid;
   gap: 0.5rem;
   animation: rise 600ms 120ms $ease both;
-}
-
-.exhibit__title {
-  font-size: clamp(2rem, 3.5vw + 1rem, 3.5rem);
-  line-height: 1.02;
-  text-wrap: balance;
-
-  em {
-    font-style: italic;
-    font-variation-settings:
-      'opsz' 72,
-      'SOFT' 100,
-      'WONK' 1;
-    color: var(--mat-sys-primary);
-  }
-}
-
-.exhibit__lede {
-  max-width: 32rem;
-  margin: 0.25rem 0 0;
-  color: var(--mat-sys-on-surface-variant);
-  text-wrap: pretty;
 }
 
 // ---------------------------------------------------------------- plate ---
@@ -94,10 +73,7 @@ $ease: motion.$ease;
   border-radius: 50%;
   background: conic-gradient(
     from calc(210deg + var(--wind)),
-    var(--brand-primary) 0 42%,
-    var(--brand-secondary) 42% 70%,
-    var(--brand-tertiary) 70% 90%,
-    var(--brand-error) 90% 100%
+    brand.$thread-stops
   );
   mask: radial-gradient(
     farthest-side,
@@ -128,7 +104,7 @@ $ease: motion.$ease;
     ),
     var(--brand-tertiary);
   box-shadow: 0 2.5cqi 4cqi -1cqi
-    color-mix(in oklab, var(--mat-sys-on-surface) 28%, transparent);
+    color-mix(in oklab, var(--ink) 30%, transparent);
   transition: transform 500ms $ease;
 }
 

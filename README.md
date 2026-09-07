@@ -60,10 +60,9 @@ Browsable documentation is served by the API itself at
 `http://localhost:3000/api/docs` (the raw OpenAPI document is at
 `/api/docs-json`). It is generated from the shared schemas rather than
 written by hand: the body of `POST /api/users` is documented from the same
-creation schema that validates it, so the Conditional Requirement (an admin
-must have a phone number and a birth date; an editor a phone number; a
-viewer neither) is expressed once, in `libs/shared`, and cannot drift from
-what the form and the server enforce.
+creation schema that validates it, so the Conditional Requirement is
+expressed once, in `libs/shared`, and cannot drift from what the form and
+the server enforce.
 
 The Seed Data (the 100 Users from the challenge) is committed as an
 application asset at `apps/api/src/assets/seed/users.json`; Normalization

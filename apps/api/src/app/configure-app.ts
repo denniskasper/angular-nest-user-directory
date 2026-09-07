@@ -41,6 +41,9 @@ export function configureApp(app: INestApplication): INestApplication {
         'Lists, searches and creates Users. What a new User must provide depends on their Role; the rule is enforced and documented from one shared definition.',
       )
       .setVersion('1.0')
+      // 3.1, where the creation schema's if/then clauses are keywords
+      // rather than extensions a reader may ignore.
+      .setOpenAPIVersion('3.1.0')
       .build(),
   );
   SwaggerModule.setup(DOCS_PATH, app, document, {

@@ -7,8 +7,17 @@ import { z } from 'zod';
  * Name, case-insensitively, before paging.
  */
 export const listUsersQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
-  search: z.string().trim().optional(),
+  page: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe('The page of matches to return, counting from 1'),
+  search: z
+    .string()
+    .trim()
+    .optional()
+    .describe('Keeps the Users whose Full Name contains this, ignoring case'),
 });
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;

@@ -8,7 +8,7 @@ export class AppController {
   @Get()
   @ApiOperation({ summary: 'The Roles the directory knows' })
   @ApiOkResponse({
-    description: 'The three Roles',
+    description: 'The Roles',
     standardSchema: z.object({ roles: z.array(z.enum(USER_ROLES)) }),
   })
   getRoles() {

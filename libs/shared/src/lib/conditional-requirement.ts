@@ -41,18 +41,30 @@ function sentenceCase(phrase: string): string {
   return phrase.charAt(0).toUpperCase() + phrase.slice(1);
 }
 
+/** "An admin must have a phone number and a birth date": the one phrasing the messages and the documentation share. */
+function mustHave(role: Role, fields: readonly ConditionalField[]): string {
+  const nouns = fields.map((field) => FIELD_NOUNS[field]).join(' and ');
+  return `${sentenceCase(ROLE_NOUNS[role])} must have ${nouns}`;
+}
+
 /** What to tell the person when this Role wants a field they left out. */
 export function conditionalRequirementMessage(
   role: Role,
   field: ConditionalField,
 ): string {
-  return `${sentenceCase(ROLE_NOUNS[role])} must have ${FIELD_NOUNS[field]}`;
+  return mustHave(role, [field]);
 }
 
 /** What to say about a field the Conditional Requirement governs, e.g. "Required for an admin or an editor". */
 export function conditionalFieldDescription(field: ConditionalField): string {
   const roles = rolesRequiring(field).map((role) => ROLE_NOUNS[role]);
   return `Required for ${roles.join(' or ')}`;
+}
+
+/** A JSON Schema clause: when the Role is this one, these fields are required. */
+interface RequiredForRole {
+  if: { properties: { role: { const: Role } } };
+  then: { required: ConditionalField[] };
 }
 
 /**
@@ -62,14 +74,13 @@ export function conditionalFieldDescription(field: ConditionalField): string {
  */
 export function conditionalRequirementDocumentation(): {
   description: string;
-  allOf: { if: object; then: { required: ConditionalField[] } }[];
+  allOf: RequiredForRole[];
 } {
   const sentences = USER_ROLES.map((role) => {
     const fields = REQUIRED_BY_ROLE[role];
-    const subject = sentenceCase(ROLE_NOUNS[role]);
     return fields.length
-      ? `${subject} must have ${fields.map((f) => FIELD_NOUNS[f]).join(' and ')}.`
-      : `${subject} has no further requirement.`;
+      ? `${mustHave(role, fields)}.`
+      : `${sentenceCase(ROLE_NOUNS[role])} has no further requirement.`;
   });
   return {
     description: `Which fields a new User must provide depends on the Role. ${sentences.join(' ')}`,

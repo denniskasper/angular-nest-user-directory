@@ -17,20 +17,35 @@ afterAll(async () => {
   await booted.close();
 });
 
-type Schema = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+/** The parts of a JSON Schema these cases read. */
+interface Schema {
+  $ref?: string;
+  description?: string;
+  format?: string;
+  enum?: unknown[];
+  required?: string[];
+  properties?: Record<string, Schema>;
+  items?: Schema;
+  anyOf?: Schema[];
+  allOf?: unknown[];
+}
+
+interface Content {
+  content?: Record<string, { schema: Schema }>;
+}
 
 interface Operation {
   parameters: { name: string; in: string; required: boolean }[];
-  requestBody: { content: Record<string, { schema: Schema }> };
-  responses: Record<string, { content?: Record<string, { schema: Schema }> }>;
+  requestBody: Content;
+  responses: Record<string, Content>;
 }
 
-interface Document {
+interface OpenApiDocument {
   paths: Record<string, Record<string, Operation>>;
   components: { schemas: Record<string, Schema> };
 }
 
-async function document(): Promise<Document> {
+async function openApiDocument(): Promise<OpenApiDocument> {
   const response = await request(booted.app.getHttpServer()).get(
     '/api/docs-json',
   );
@@ -39,16 +54,14 @@ async function document(): Promise<Document> {
 }
 
 /** The schema itself, following a reference into the document's components. */
-function resolve(doc: Document, schema: Schema): Schema {
-  const ref: string | undefined = schema.$ref;
-  if (ref === undefined) return schema;
-  return doc.components.schemas[ref.replace('#/components/schemas/', '')];
+function resolve(doc: OpenApiDocument, schema: Schema): Schema {
+  if (schema.$ref === undefined) return schema;
+  return doc.components.schemas[
+    schema.$ref.replace('#/components/schemas/', '')
+  ];
 }
 
-function jsonBody(
-  doc: Document,
-  holder: { content?: Record<string, { schema: Schema }> },
-) {
+function jsonBody(doc: OpenApiDocument, holder: Content): Schema {
   return resolve(doc, holder.content!['application/json'].schema);
 }
 
@@ -64,7 +77,7 @@ describe('GET /api/docs', () => {
 
 describe('GET /api/docs-json', () => {
   it('lists every endpoint the directory uses', async () => {
-    const { paths } = await document();
+    const { paths } = await openApiDocument();
 
     expect(Object.keys(paths['/api'])).toEqual(['get']);
     expect(Object.keys(paths['/api/users']).sort()).toEqual(['get', 'post']);
@@ -72,7 +85,7 @@ describe('GET /api/docs-json', () => {
   });
 
   it('documents the list parameters', async () => {
-    const { paths } = await document();
+    const { paths } = await openApiDocument();
 
     expect(
       paths['/api/users'].get.parameters.map((p) => [p.name, p.in, p.required]),
@@ -83,10 +96,10 @@ describe('GET /api/docs-json', () => {
   });
 
   it('documents a new User from the shared creation schema', async () => {
-    const doc = await document();
+    const doc = await openApiDocument();
     const body = jsonBody(doc, doc.paths['/api/users'].post.requestBody);
 
-    expect(Object.keys(body.properties)).toEqual([
+    expect(Object.keys(body.properties!)).toEqual([
       'firstName',
       'lastName',
       'email',
@@ -95,13 +108,13 @@ describe('GET /api/docs-json', () => {
       'role',
     ]);
     expect(body.required).toEqual(['firstName', 'lastName', 'email', 'role']);
-    expect(body.properties.role.enum).toEqual(['admin', 'editor', 'viewer']);
-    expect(body.properties.email.format).toBe('email');
-    expect(body.properties.birthDate.format).toBe('date');
+    expect(body.properties!.role.enum).toEqual(['admin', 'editor', 'viewer']);
+    expect(body.properties!.email.format).toBe('email');
+    expect(body.properties!.birthDate.format).toBe('date');
   });
 
   it('reflects the Conditional Requirement by Role', async () => {
-    const doc = await document();
+    const doc = await openApiDocument();
     const body = jsonBody(doc, doc.paths['/api/users'].post.requestBody);
 
     expect(body.allOf).toEqual([
@@ -118,37 +131,49 @@ describe('GET /api/docs-json', () => {
       'An admin must have a phone number and a birth date.',
     );
     expect(body.description).toContain('An editor must have a phone number.');
-    expect(body.properties.phoneNumber.description).toBe(
+    expect(body.properties!.phoneNumber.description).toBe(
       'Required for an admin or an editor',
     );
-    expect(body.properties.birthDate.description).toBe('Required for an admin');
+    expect(body.properties!.birthDate.description).toBe(
+      'Required for an admin',
+    );
   });
 
-  it('documents the responses from the shared schemas', async () => {
-    const doc = await document();
+  it('documents a fetched and a created User from the one stored schema', async () => {
+    const doc = await openApiDocument();
     const { paths } = doc;
 
     const user = jsonBody(doc, paths['/api/users/{id}'].get.responses['200']);
     expect(user.required).toEqual(['id', 'firstName', 'lastName', 'role']);
-    expect(user.properties.role.enum).toEqual(['admin', 'editor', 'viewer']);
+    expect(user.properties!.role.enum).toEqual(['admin', 'editor', 'viewer']);
+    expect(jsonBody(doc, paths['/api/users'].post.responses['201'])).toBe(user);
     expect(paths['/api/users/{id}'].get.responses['404']).toBeDefined();
+  });
 
-    const created = jsonBody(doc, paths['/api/users'].post.responses['201']);
-    expect(created).toBe(user);
+  it('documents a rejected User with the field-keyed body', async () => {
+    const doc = await openApiDocument();
 
-    const rejected = jsonBody(doc, paths['/api/users'].post.responses['400']);
-    expect(Object.keys(rejected.properties)).toEqual([
+    const rejected = jsonBody(
+      doc,
+      doc.paths['/api/users'].post.responses['400'],
+    );
+    expect(Object.keys(rejected.properties!)).toEqual([
       'statusCode',
       'error',
       'message',
       'fields',
     ]);
+  });
 
-    const listed = jsonBody(doc, paths['/api/users'].get.responses['200']);
-    expect(listed.anyOf).toHaveLength(2);
-    const [array, page] = listed.anyOf.map((s: Schema) => resolve(doc, s));
-    expect(resolve(doc, array.items)).toBe(user);
+  it('documents the list as every User or one page of them', async () => {
+    const doc = await openApiDocument();
+
+    const listed = jsonBody(doc, doc.paths['/api/users'].get.responses['200']);
+    const [array, page] = listed.anyOf!.map((s) => resolve(doc, s));
+    expect(resolve(doc, array.items!)).toBe(
+      jsonBody(doc, doc.paths['/api/users/{id}'].get.responses['200']),
+    );
     expect(page.required).toEqual(['items', 'total', 'page', 'pageSize']);
-    expect(page.properties.pageSize.enum).toEqual([25]);
+    expect(page.properties!.pageSize.enum).toEqual([25]);
   });
 });

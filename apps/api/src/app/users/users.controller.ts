@@ -28,7 +28,7 @@ import { ListUsersQuery, listUsersQuerySchema } from './list-users-query';
 import { UsersService } from './users.service';
 
 /** What the list answers with: every User, or one page of matches. */
-const listing = z.union([z.array(storedUserSchema), userPageSchema]);
+const listResponseSchema = z.union([z.array(storedUserSchema), userPageSchema]);
 
 @Controller('users')
 export class UsersController {
@@ -42,11 +42,11 @@ export class UsersController {
   @ApiOperation({
     summary: 'List every User, or one page of those matching a search',
     description:
-      'With no parameters, every User as an array. With page or search, one page of the Users whose Full Name contains the search term, ignoring case, together with the total number of matches.',
+      'With no parameters, every User as an array. With page or search, one page of matches together with their total.',
   })
   @ApiOkResponse({
     description: 'Every User, or one page of matches',
-    standardSchema: listing,
+    standardSchema: listResponseSchema,
   })
   @ApiBadRequestResponse({
     description: 'page is not a positive whole number',

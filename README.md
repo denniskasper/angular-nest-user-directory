@@ -5,6 +5,12 @@ An Nx monorepo holding an Angular frontend, a NestJS API and a shared module
 that both consume, so the browser and the server validate a new User against
 one definition and cannot disagree.
 
+**→ [user-directory.denniskasper.dev](https://user-directory.denniskasper.dev)**
+
+The public instance holds the 100 fictional Users of the Seed Data and
+accepts new ones from anyone, as the form does locally. See
+[Deployment](#deployment).
+
 ```
 apps/frontend      Angular 22 + Angular Material (Material 3), zoneless
 apps/frontend-e2e  Playwright specs, run at a phone and a desktop viewport
@@ -12,6 +18,8 @@ apps/api           NestJS 12
 libs/shared        the module both applications consume: Role vocabulary,
                    User schemas, the Conditional Requirement
 tools/             the reset script
+deploy/            the smoke test against the built image
+.github/workflows  the CI workflow: check, then trigger the deployment
 ```
 
 This repository was developed **agentic-coding first**. The spec, tickets,
@@ -329,10 +337,98 @@ normalizer are not tested in isolation; their behaviour is proved above them.
   on the Seed Data at first start; a store that later fails the stored schema
   stops the API with a message naming the file.
 
+## Deployment
+
+One image, one process: Node runs the API and serves the built frontend
+beside it, so the browser's relative `/api` requests need neither a proxy
+nor CORS. Hosted on a private server behind [Dokploy](https://dokploy.com/).
+
+```sh
+docker build -t user-directory .
+docker run -p 3000:3000 user-directory
+```
+
+The [`Dockerfile`](Dockerfile) builds in two stages. The first runs the same
+`nx` builds as `npm run build`; the second installs only what the API bundle
+requires at runtime (the lockfile the build writes to `dist/apps/api` names
+five packages) and copies in the bundle and the built frontend. Nothing else
+from the workspace is in the image. It runs as the unprivileged `node` user
+and answers a `HEALTHCHECK` at `/api` every 30 seconds.
+
+The served frontend is the one addition the container makes to what
+`npm start` runs (`apps/api/src/app/serve-frontend.ts`, opted into by
+`STATIC_DIR`). It does four things a static host would otherwise do:
+
+- **The SPA fallback.** Any page request outside `/api` gets `index.html`,
+  so a deep link such as `/users/7` or a reload on `/smiley` reaches the
+  router instead of a bare 404. Requests under `/api` never get the page.
+- **Cache rules by file.** The hashed bundles and fonts are cached for a
+  year and marked immutable; `index.html` is `no-cache`, since it carries
+  no hash and names the hashed files. A device that cached it would keep
+  the previous deployment's bundle names.
+- **Compression**, for the bundles and the API alike.
+- **Headers.** `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+  and no `X-Powered-By`.
+
+Three environment variables, all set in the image: `PORT` (3000),
+`DATA_DIR` (`/data`, where the store is written) and `STATIC_DIR`
+(`/app/public`, the built frontend). The store lives outside the image:
+mount a volume at `/data` to keep created Users across deployments. Without
+one, every new container starts from the Seed Data again, which is the
+behaviour `npm run reset` produces locally.
+
+Dokploy provides TLS, the domain and the routing in front. It is set up as:
+
+1. **DNS** — an `A` record `user-directory` in the zone `denniskasper.dev`
+   pointing at the server (Cloudflare, proxy off, so Dokploy obtains its
+   certificate through the HTTP-01 challenge).
+2. **Dokploy** — a new _Application_, source GitHub → this repository,
+   branch `main`, build type **Dockerfile** (path `./Dockerfile`).
+3. **Domain** — `user-directory.denniskasper.dev`, container port
+   **3000**, HTTPS with a Let's Encrypt certificate.
+4. **Volume** — a volume mount at `/data`, so the store survives a redeploy.
+5. **Deploy** — _Auto Deploy_ is **off**. GitHub Actions triggers the build,
+   and only once the checks are green.
+
+### Check, then ship
+
+If Dokploy listened to the push itself, the tests and the deployment would
+run side by side, and a red run would go live anyway. So
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) holds the trigger,
+and its last job calls Dokploy's API (`POST /api/application.deploy`,
+header `x-api-key`). The repository holds `DOKPLOY_URL`, `DOKPLOY_API_KEY`
+and `DOKPLOY_APPLICATION_ID` as secrets for it.
+
+Dokploy has no public address; it hangs off a tailnet. The runner sits in
+GitHub's cloud and could not reach it, so it joins the tailnet as a
+short-lived node for the duration of that one job (`tailscale/github-action`,
+secrets `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_SECRET`). What it may do there is
+decided by the ACL on `tag:ci`: reach the Dokploy host, nothing else. The
+three checks before it need none of this; they run entirely on the runner.
+
+Three checks run first, and they see different things:
+
+- **Types, lint, tests, build** — `npm run typecheck`, `npm run lint`,
+  `npm test`, `npm run build`. The same builds the Dockerfile runs, so a
+  broken build fails here, two minutes in.
+- **Smoke test on the image** ([`deploy/smoke-test.sh`](deploy/smoke-test.sh))
+  — the SPA fallback, the cache rules, the compression, the headers and the
+  API beside it, against the running container. The browser specs cannot
+  see this: they run against the development server, and the served
+  frontend does not exist there.
+- **Browser specs** — `npm run e2e`, at both viewports.
+
+The smoke test also runs by hand, against a local container or the public
+URL:
+
+```sh
+deploy/smoke-test.sh https://user-directory.denniskasper.dev
+```
+
 ## How this was built
 
 The order was documentation first, then code. `.scratch/user-directory/`
-holds the spec and the twelve tickets that were implemented in sequence,
+holds the spec and the thirteen tickets that were implemented in sequence,
 each with a comment recording what was verified and what the review changed.
 `CONTEXT.md` fixes the vocabulary; `docs/adr/` records the decisions.
 

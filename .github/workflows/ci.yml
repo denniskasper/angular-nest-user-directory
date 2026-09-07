@@ -1,0 +1,168 @@
+name: CI
+
+# Check, then ship.
+#
+# Dokploy no longer deploys on a push by itself: the application's
+# "Auto Deploy" switch is off, and the build is triggered from the `deploy`
+# job at the bottom — only once everything before it is green. Without that
+# arrangement the tests and the deployment would run side by side, and a red
+# run would go live anyway.
+#
+# Three checks that see different things:
+#   checks — types, lint, unit and HTTP-level tests, build. Catches most.
+#   image  — the SPA fallback, cache rules, compression and headers, on the
+#            image that is about to ship (deploy/smoke-test.sh).
+#   e2e    — the Playwright specs at a phone and a desktop viewport.
+
+# `push` only on `main`: a branch with an open pull request would otherwise
+# run twice, once for the push and once for the request.
+#
+# `paths-ignore` keeps the prose out. The build reads none of it, which is
+# already stated in two other places: the Dockerfile copies its inputs one by
+# one, and .dockerignore excludes exactly these paths. Without the filter a
+# change to the README or a ticket would cost the whole run and end in a
+# deployment that ships, file for file, the same thing as the previous one.
+#
+# `.github/` is deliberately not in the list: a change to this workflow must
+# be allowed to check itself.
+#
+# The list appears twice because GitHub Actions does not resolve YAML anchors.
+# Whoever touches one touches both.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.scratch/**'
+      - '.claude/**'
+      - '.agents/**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.scratch/**'
+      - '.claude/**'
+      - '.agents/**'
+
+# A push that overtakes the previous one makes that run pointless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # No daemon on a runner that exists for one run, and no cloud lookup.
+  NX_DAEMON: false
+
+jobs:
+  checks:
+    name: Types, lint, tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      # The unit and HTTP-level suites (Seams 1 and 2); vitest runs once
+      # rather than watching because CI is set.
+      - run: npm test
+      # The same builds the Dockerfile runs, so a broken build fails here,
+      # two minutes in, rather than inside the image job.
+      - run: npm run build
+
+  image:
+    name: Smoke test on the image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the image
+        run: docker build -t user-directory:check .
+      - name: Start the container
+        run: docker run -d --name user-directory -p 3000:3000 user-directory:check
+      - name: Smoke test
+        run: deploy/smoke-test.sh
+      - name: Container log
+        if: failure()
+        run: docker logs user-directory
+
+  e2e:
+    name: Browser specs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # The browser is a three-digit number of megabytes. The key hangs off
+      # package-lock.json because that is where the Playwright version that
+      # belongs to it is recorded.
+      - name: Browser from the cache
+        id: browser
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Fetch the browser
+        if: steps.browser.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      # The system packages live outside the cached directory, so a cache
+      # hit still leaves the runner without them.
+      - name: System packages for the browser
+        if: steps.browser.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # Both viewports, both projects, the API against a store under tmp/e2e
+      # (apps/frontend-e2e/playwright.config.mts).
+      - name: Playwright
+        run: npm run e2e
+
+      - name: Report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: apps/frontend-e2e/test-output/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  deploy:
+    name: Trigger Dokploy
+    needs: [checks, image, e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      # Dokploy hangs off a tailnet and has no public address. The runner
+      # sits in GitHub's cloud and could not reach it otherwise, so it joins
+      # the tailnet as a short-lived node for the duration of this job. What
+      # it may do there is decided by the ACL on the tag, not by this
+      # workflow: `tag:ci` needs access to the Dokploy host on port 3000.
+      - name: Join the tailnet
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      # The three values are repository secrets. `--fail-with-body` turns
+      # the step red when Dokploy rejects the request and shows what it
+      # answered; curl would otherwise swallow the text.
+      - name: Request the deployment
+        env:
+          URL: ${{ secrets.DOKPLOY_URL }}
+          KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          APPLICATION: ${{ secrets.DOKPLOY_APPLICATION_ID }}
+        run: |
+          curl --fail-with-body -sS -X POST "$URL/api/application.deploy" \
+            -H "x-api-key: $KEY" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg id "$APPLICATION" '{applicationId: $id}')"

@@ -1,0 +1,29 @@
+# The Dockerfile copies its inputs one by one; this list additionally keeps
+# the context small that the client sends over the Docker socket before
+# every build.
+
+node_modules
+dist
+tmp
+data
+coverage
+out-tsc
+.git
+.nx
+.angular
+
+# Part of the submission, not of the build.
+docs
+.scratch
+.claude
+.agents
+.github
+challenge
+*.zip
+tools
+apps/frontend-e2e
+test-output
+playwright-report
+
+# Prose that no build reads.
+*.md

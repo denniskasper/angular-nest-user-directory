@@ -5,9 +5,23 @@ import {
 } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { validationFailure } from '@pdr-cloud/shared';
+import { serveFrontend } from './serve-frontend';
+
+/** The global route prefix every controller is served under. */
+export const API_PREFIX = 'api';
 
 /** Where the browsable API documentation is served, under the global prefix. */
 export const DOCS_PATH = 'docs';
+
+export interface AppOptions {
+  /**
+   * The directory of a built frontend to serve beside the API, as the
+   * public deployment does. Absent in development, where the development
+   * server serves the frontend and proxies `/api`, and in the HTTP-level
+   * tests unless a spec asks for one.
+   */
+  frontendDir?: string;
+}
 
 /**
  * Configuration every instance of the application gets — the served one in
@@ -24,14 +38,20 @@ export const DOCS_PATH = 'docs';
  * `standardSchema` through the schema's own JSON Schema, so what it says a
  * request must satisfy is what the pipe enforces.
  */
-export function configureApp(app: INestApplication): INestApplication {
-  app.setGlobalPrefix('api');
+export function configureApp(
+  app: INestApplication,
+  { frontendDir }: AppOptions = {},
+): INestApplication {
+  app.setGlobalPrefix(API_PREFIX);
   app.useGlobalPipes(
     new StandardSchemaValidationPipe({
       exceptionFactory: (issues) =>
         new BadRequestException(validationFailure(issues)),
     }),
   );
+  if (frontendDir) {
+    serveFrontend(app, { frontendDir, apiPrefix: API_PREFIX });
+  }
 
   const document = SwaggerModule.createDocument(
     app,

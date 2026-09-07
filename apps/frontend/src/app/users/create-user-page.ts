@@ -13,14 +13,20 @@ import {
   standardSchemaError,
   submit,
   validateTree,
+  ValidationError,
 } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import {
+  ConditionalField,
   createUserSchema,
   fullName,
+  isConditionalRequirementIssue,
+  isValidationFailure,
+  requiredFieldsFor,
   Role,
   User,
   USER_ROLES,
+  ValidationFailure,
 } from '@pdr-cloud/shared';
 import { firstValueFrom } from 'rxjs';
 import { Notices } from '../notices';
@@ -52,6 +58,16 @@ const EMPTY_DRAFT: Draft = {
 const FIELDS = Object.keys(EMPTY_DRAFT) as (keyof Draft)[];
 
 /**
+ * The kinds of error a control can carry. A `standardSchema` error is
+ * about the person's own entry — malformed, or missing where every User
+ * needs it — and waits until they have been to the control. The other two
+ * are caused from outside it: the Role they chose making it required, or
+ * the server's answer. Those show at once.
+ */
+const CONDITIONAL_REQUIREMENT = 'conditionalRequirement';
+const SERVER = 'server';
+
+/**
  * The draft as the creation schema sees it. A blank optional field is an
  * absence, not an empty string, so the value validated here is exactly the
  * value that is sent.
@@ -64,14 +80,11 @@ function toInput(draft: Draft): unknown {
   };
 }
 
-/** What to tell the person when the server did not create the User. */
-function describeFailure(error: unknown): string {
-  if (error instanceof HttpErrorResponse && error.status === 400) {
-    const messages: unknown = error.error?.message;
-    const detail = Array.isArray(messages) ? `: ${messages.join('; ')}` : '';
-    return `The directory rejected this User${detail}.`;
-  }
-  return 'The User could not be added. Check the connection and try again.';
+/** The validation failure the server answered with, if that is what this is. */
+function validationFailureOf(error: unknown): ValidationFailure | undefined {
+  return error instanceof HttpErrorResponse && isValidationFailure(error.error)
+    ? error.error
+    : undefined;
 }
 
 /**
@@ -79,11 +92,16 @@ function describeFailure(error: unknown): string {
  * schema — the same one the API validates the body against — with each
  * issue attached to the control at its path, so the browser can never
  * accept what the server rejects, nor reject what it would accept
- * (spec.md, Shared rules module). Field-level problems appear inline; the
- * outcome of a submission is announced as a notice, and a success returns
- * to the directory searched for the new User's Full Name. A submit that
- * fails in the browser moves focus to the first control at fault, whose
- * error is read with it.
+ * (spec.md, Shared rules module). The Conditional Requirement shows the
+ * moment a Role is chosen: the fields that Role requires are flagged, and
+ * one left empty is marked at fault without a visit or a submit.
+ *
+ * Field-level problems appear inline; the outcome of a submission is
+ * announced as a notice, and a success returns to the directory searched
+ * for the new User's Full Name. Should the server reject the User anyway,
+ * its field-keyed messages are attached to the controls they name. A
+ * submit that fails moves focus to the first control at fault, whose error
+ * is read with it.
  *
  * Single column and full width on phones; from tablet up the name and the
  * contact pairs sit side by side (create-user-page.scss).
@@ -103,11 +121,13 @@ export class CreateUserPage {
       const result = createUserSchema.safeParse(toInput(value()));
       if (result.success) return undefined;
       const root = fieldTreeOf(path);
-      return result.error.issues.map((issue) =>
-        standardSchemaError(issue, {
-          message: issue.message,
-          fieldTree: root[String(issue.path[0]) as keyof Draft] ?? root,
-        }),
+      return result.error.issues.map(
+        (issue): ValidationError.WithOptionalFieldTree => {
+          const fieldTree = root[String(issue.path[0]) as keyof Draft] ?? root;
+          return isConditionalRequirementIssue(issue)
+            ? { kind: CONDITIONAL_REQUIREMENT, message: issue.message, fieldTree }
+            : standardSchemaError(issue, { message: issue.message, fieldTree });
+        },
       );
     });
   });
@@ -117,15 +137,28 @@ export class CreateUserPage {
   private readonly router = inject(Router);
   private readonly notices = inject(Notices);
 
-  /** The first problem with a field, once the person has been there or has tried to submit. */
-  protected errorOf(field: FieldTree<unknown>): string | undefined {
-    const state = field();
-    return state.touched() ? state.errors()[0]?.message : undefined;
+  /** The Role that makes this field required, if the chosen one does. */
+  protected requiredBy(field: ConditionalField): Role | undefined {
+    const role = this.draft().role;
+    return role && requiredFieldsFor(role).includes(field) ? role : undefined;
   }
 
-  protected onSubmit(event: Event): void {
+  /**
+   * The first problem to show against a field: any once the person has
+   * been there or has tried to submit; before that, only one caused from
+   * outside the field.
+   */
+  protected errorOf(field: FieldTree<unknown>): string | undefined {
+    const state = field();
+    const shown = state.touched()
+      ? state.errors()
+      : state.errors().filter((error) => error.kind !== 'standardSchema');
+    return shown[0]?.message;
+  }
+
+  protected async onSubmit(event: Event): Promise<void> {
     event.preventDefault();
-    submit(this.form, {
+    const succeeded = await submit(this.form, {
       action: async () => {
         try {
           const user = await firstValueFrom(
@@ -141,16 +174,42 @@ export class CreateUserPage {
           await this.router.navigate(['/'], {
             queryParams: { search: fullName(user) },
           });
+          return undefined;
         } catch (error) {
-          this.notices.announce({
-            tone: 'error',
-            text: describeFailure(error),
-          });
+          return this.reportFailure(error);
         }
-        return undefined;
       },
-      onInvalid: () => this.focusFirstInvalid(),
     });
+    if (!succeeded) this.focusFirstInvalid();
+  }
+
+  /**
+   * Announces why the User was not added and, when the server named the
+   * fields at fault, attaches its message to each of them.
+   */
+  private reportFailure(error: unknown): ValidationError.WithOptionalFieldTree[] {
+    const failure = validationFailureOf(error);
+    if (!failure) {
+      this.notices.announce({
+        tone: 'error',
+        text: 'The User could not be added. Check the connection and try again.',
+      });
+      return [];
+    }
+    const errors = Object.entries(failure.fields).flatMap(([field, messages]) =>
+      messages.map((message) => ({
+        kind: SERVER,
+        message,
+        fieldTree: this.form[field as keyof Draft],
+      })),
+    );
+    this.notices.announce({
+      tone: 'error',
+      text: errors.length
+        ? 'The directory rejected this User. See the fields marked.'
+        : `The directory rejected this User: ${failure.message}.`,
+    });
+    return errors;
   }
 
   private focusFirstInvalid(): void {

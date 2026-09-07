@@ -117,10 +117,44 @@ $ease: motion.$ease;
 }
 
 .field__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
   font: var(--mat-sys-label-large);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--mat-sys-on-surface-variant);
+}
+
+// The Conditional Requirement, stamped on the line the moment a Role is
+// chosen: a small seal in that Role's tint, the same tint the Role wears
+// in the directory, saying which Role wants the field. It stays while the
+// field is filled, so the person can see the field is required, not
+// merely that it was.
+.field__flag {
+  display: inline-flex;
+  align-items: center;
+  height: 1.25rem;
+  padding-inline: 0.5rem;
+  border-radius: var(--mat-sys-corner-full);
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  animation: rise 240ms $ease both;
+
+  &[data-role='admin'] {
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+  }
+
+  &[data-role='editor'] {
+    background: var(--mat-sys-tertiary-container);
+    color: var(--mat-sys-on-tertiary-container);
+  }
 }
 
 // A ruled line to write on. The rule thickens and takes the brand colour
@@ -171,8 +205,9 @@ $ease: motion.$ease;
   color: var(--mat-sys-error);
   animation: rise 240ms $ease both;
 
+  // The arrow is decoration; it must not be read as part of the message.
   &::before {
-    content: '↳ ';
+    content: '↳ ' / '';
     opacity: 0.7;
   }
 }

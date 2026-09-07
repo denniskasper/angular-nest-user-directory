@@ -76,20 +76,69 @@ describe('POST /api/users', () => {
     );
   });
 
-  it('rejects input the form would reject, naming every field at fault', async () => {
+  it('rejects input the form would reject, keyed by the field at fault', async () => {
     const response = await request(booted.app.getHttpServer())
       .post('/api/users')
       .send({ ...ada, firstName: '', email: 'not-an-email', role: 'owner' });
 
     expect(response.status).toBe(400);
-    const messages = response.body.message as string[];
-    expect(messages).toHaveLength(3);
-    expect(messages.join('\n')).toMatch(/firstName/);
-    expect(messages.join('\n')).toMatch(/email/);
-    expect(messages.join('\n')).toMatch(/role/);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'Validation failed',
+      fields: {
+        firstName: ['First name is required'],
+        email: ['Enter an email address, like name@example.org'],
+        role: ['Choose admin, editor or viewer'],
+      },
+    });
 
     const listed = await request(booted.app.getHttpServer()).get('/api/users');
     expect(listed.body).toHaveLength(100);
+  });
+
+  it('enforces the Conditional Requirement from the shared definition', async () => {
+    const { phoneNumber, birthDate, ...bare } = ada;
+    void phoneNumber;
+    void birthDate;
+
+    const admin = await request(booted.app.getHttpServer())
+      .post('/api/users')
+      .send({ ...bare, role: 'admin' });
+    expect(admin.status).toBe(400);
+    expect(admin.body.fields).toEqual({
+      phoneNumber: ['An admin must have a phone number'],
+      birthDate: ['An admin must have a birth date'],
+    });
+
+    const editor = await request(booted.app.getHttpServer())
+      .post('/api/users')
+      .send({ ...bare, role: 'editor' });
+    expect(editor.status).toBe(400);
+    expect(editor.body.fields).toEqual({
+      phoneNumber: ['An editor must have a phone number'],
+    });
+
+    const viewer = await request(booted.app.getHttpServer())
+      .post('/api/users')
+      .send({ ...bare, role: 'viewer' });
+    expect(viewer.status).toBe(201);
+    expect(viewer.body).toEqual({ id: 101, ...bare, role: 'viewer' });
+
+    const listed = await request(booted.app.getHttpServer()).get('/api/users');
+    expect(listed.body).toHaveLength(101);
+  });
+
+  it('reports a Role-dependent fault alongside an unrelated one', async () => {
+    const { phoneNumber, ...withoutPhone } = ada;
+    void phoneNumber;
+
+    const response = await request(booted.app.getHttpServer())
+      .post('/api/users')
+      .send({ ...withoutPhone, email: 'nope', role: 'admin' });
+
+    expect(response.status).toBe(400);
+    expect(Object.keys(response.body.fields)).toEqual(['email', 'phoneNumber']);
   });
 
   it('never stores an id a client sends', async () => {

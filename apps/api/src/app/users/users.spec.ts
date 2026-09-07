@@ -130,7 +130,7 @@ describe('GET /api/users?page=&search=', () => {
       );
 
       expect(response.status, `page=${page}`).toBe(400);
-      expect(response.body.message.join()).toContain('page');
+      expect(Object.keys(response.body.fields)).toEqual(['page']);
     }
   });
 });

@@ -3,7 +3,7 @@ import { createUserSchema } from './create-user';
 /**
  * Seam 1 (spec.md, Testing Decisions): the shared module's parse boundary.
  * These cases cover what new input must satisfy regardless of Role; the
- * Conditional Requirement is proved in ticket 08.
+ * Conditional Requirement is proved in conditional-requirement.spec.ts.
  */
 describe('createUserSchema', () => {
   const complete = {

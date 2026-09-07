@@ -77,7 +77,15 @@
         </div>
         @let phoneNumberError = errorOf(form.phoneNumber);
         <div class="field" [class.field--invalid]="phoneNumberError">
-          <label class="field__label" for="phoneNumber">Phone number</label>
+          @let phoneNumberRequiredBy = requiredBy('phoneNumber');
+          <label class="field__label" for="phoneNumber">
+            Phone number
+            @if (phoneNumberRequiredBy) {
+            <span class="field__flag" [attr.data-role]="phoneNumberRequiredBy"
+              >Required for {{ phoneNumberRequiredBy }}</span
+            >
+            }
+          </label>
           <input
             id="phoneNumber"
             data-field="phoneNumber"
@@ -102,7 +110,15 @@
       <div class="group__fields group__fields--pair">
         @let birthDateError = errorOf(form.birthDate);
         <div class="field" [class.field--invalid]="birthDateError">
-          <label class="field__label" for="birthDate">Birth date</label>
+          @let birthDateRequiredBy = requiredBy('birthDate');
+          <label class="field__label" for="birthDate">
+            Birth date
+            @if (birthDateRequiredBy) {
+            <span class="field__flag" [attr.data-role]="birthDateRequiredBy"
+              >Required for {{ birthDateRequiredBy }}</span
+            >
+            }
+          </label>
           <input
             id="birthDate"
             data-field="birthDate"

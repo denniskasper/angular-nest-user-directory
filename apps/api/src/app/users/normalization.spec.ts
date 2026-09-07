@@ -94,13 +94,12 @@ describe('Normalization runs once', () => {
   it('reports the repairs at first start and serves the store as-is on later starts', async () => {
     const log = vi.spyOn(Logger.prototype, 'log');
     try {
-      const first = await bootApp();
-      await first.app.close();
-      const second = await bootApp(first.dataDir);
-      const response = await request(second.app.getHttpServer()).get(
+      const booted = await bootApp();
+      await booted.restart();
+      const response = await request(booted.app.getHttpServer()).get(
         '/api/users',
       );
-      await second.close();
+      await booted.close();
 
       // The startup report is the observable the ticket asks for: how many
       // records, which fields, which ids. Its exact wording is not.

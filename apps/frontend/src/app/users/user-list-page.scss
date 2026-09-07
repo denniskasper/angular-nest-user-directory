@@ -24,14 +24,6 @@ $ease: motion.$ease;
   }
 }
 
-.directory__eyebrow {
-  margin: 0;
-  font: var(--mat-sys-label-large);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--mat-sys-secondary);
-}
-
 .directory__title {
   font-size: clamp(2rem, 3.5vw + 1rem, 3.5rem);
   line-height: 1.02;

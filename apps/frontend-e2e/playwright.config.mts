@@ -31,7 +31,9 @@ export default defineConfig({
     {
       command: `rm -rf ${apiDataDir} && npx nx run api:serve`,
       url: 'http://localhost:3000/api',
-      reuseExistingServer: true,
+      // Never reuse an API already running: it would be serving the real
+      // store, and the creation spec writes.
+      reuseExistingServer: false,
       cwd: workspaceRoot,
       env: { DATA_DIR: apiDataDir },
     },

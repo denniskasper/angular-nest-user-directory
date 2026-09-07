@@ -1,6 +1,6 @@
 <section class="create" aria-labelledby="create-title">
   <header class="create__head">
-    <p class="create__eyebrow">New record</p>
+    <p class="eyebrow">New record</p>
     <h2 id="create-title" class="create__title">Add a <em>User</em>.</h2>
     <p class="create__lede">
       They are written into the directory exactly as entered here, and given the
@@ -15,13 +15,14 @@
     (submit)="onSubmit($event)"
   >
     <fieldset class="group">
-      <legend class="group__legend">Name</legend>
+      <legend class="eyebrow group__legend">Name</legend>
       <div class="group__fields group__fields--pair">
         @let firstNameError = errorOf(form.firstName);
         <div class="field" [class.field--invalid]="firstNameError">
           <label class="field__label" for="firstName">First name</label>
           <input
             id="firstName"
+            data-field="firstName"
             class="field__input"
             type="text"
             autocomplete="given-name"
@@ -30,9 +31,7 @@
             [attr.aria-describedby]="firstNameError ? 'firstName-error' : null"
           />
           @if (firstNameError) {
-          <p id="firstName-error" class="field__error" role="alert">
-            {{ firstNameError }}
-          </p>
+          <p id="firstName-error" class="field__error">{{ firstNameError }}</p>
           }
         </div>
         @let lastNameError = errorOf(form.lastName);
@@ -40,6 +39,7 @@
           <label class="field__label" for="lastName">Last name</label>
           <input
             id="lastName"
+            data-field="lastName"
             class="field__input"
             type="text"
             autocomplete="family-name"
@@ -48,22 +48,21 @@
             [attr.aria-describedby]="lastNameError ? 'lastName-error' : null"
           />
           @if (lastNameError) {
-          <p id="lastName-error" class="field__error" role="alert">
-            {{ lastNameError }}
-          </p>
+          <p id="lastName-error" class="field__error">{{ lastNameError }}</p>
           }
         </div>
       </div>
     </fieldset>
 
     <fieldset class="group">
-      <legend class="group__legend">Contact</legend>
+      <legend class="eyebrow group__legend">Contact</legend>
       <div class="group__fields group__fields--pair">
         @let emailError = errorOf(form.email);
         <div class="field" [class.field--invalid]="emailError">
           <label class="field__label" for="email">Email</label>
           <input
             id="email"
+            data-field="email"
             class="field__input"
             type="email"
             autocomplete="email"
@@ -73,9 +72,7 @@
             [attr.aria-describedby]="emailError ? 'email-error' : null"
           />
           @if (emailError) {
-          <p id="email-error" class="field__error" role="alert">
-            {{ emailError }}
-          </p>
+          <p id="email-error" class="field__error">{{ emailError }}</p>
           }
         </div>
         @let phoneNumberError = errorOf(form.phoneNumber);
@@ -83,6 +80,7 @@
           <label class="field__label" for="phoneNumber">Phone number</label>
           <input
             id="phoneNumber"
+            data-field="phoneNumber"
             class="field__input"
             type="tel"
             autocomplete="tel"
@@ -91,7 +89,7 @@
             [attr.aria-describedby]="phoneNumberError ? 'phoneNumber-error' : null"
           />
           @if (phoneNumberError) {
-          <p id="phoneNumber-error" class="field__error" role="alert">
+          <p id="phoneNumber-error" class="field__error">
             {{ phoneNumberError }}
           </p>
           }
@@ -100,13 +98,14 @@
     </fieldset>
 
     <fieldset class="group">
-      <legend class="group__legend">Record</legend>
+      <legend class="eyebrow group__legend">Record</legend>
       <div class="group__fields group__fields--pair">
         @let birthDateError = errorOf(form.birthDate);
         <div class="field" [class.field--invalid]="birthDateError">
           <label class="field__label" for="birthDate">Birth date</label>
           <input
             id="birthDate"
+            data-field="birthDate"
             class="field__input"
             type="date"
             autocomplete="bday"
@@ -115,18 +114,12 @@
             [attr.aria-describedby]="birthDateError ? 'birthDate-error' : null"
           />
           @if (birthDateError) {
-          <p id="birthDate-error" class="field__error" role="alert">
-            {{ birthDateError }}
-          </p>
+          <p id="birthDate-error" class="field__error">{{ birthDateError }}</p>
           }
         </div>
 
         @let roleError = errorOf(form.role);
-        <fieldset
-          class="field roles"
-          [class.field--invalid]="roleError"
-          [attr.aria-describedby]="roleError ? 'role-error' : null"
-        >
+        <fieldset class="field roles" [class.field--invalid]="roleError">
           <legend class="field__label">Role</legend>
           <div class="roles__options">
             @for (role of roles; track role) {
@@ -134,17 +127,18 @@
               <input
                 type="radio"
                 class="roles__input"
+                data-field="role"
                 [value]="role"
                 [formField]="form.role"
+                [attr.aria-invalid]="!!roleError"
+                [attr.aria-describedby]="roleError ? 'role-error' : null"
               />
               <span class="roles__name">{{ role }}</span>
             </label>
             }
           </div>
           @if (roleError) {
-          <p id="role-error" class="field__error" role="alert">
-            {{ roleError }}
-          </p>
+          <p id="role-error" class="field__error">{{ roleError }}</p>
           }
         </fieldset>
       </div>

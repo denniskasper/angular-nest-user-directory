@@ -48,6 +48,7 @@ test.describe('create a User', () => {
       if (request.method() === 'POST') posts.push(request.url());
     });
     await add.click();
+    await expect(firstName).toBeFocused();
     await expect(form.getByText('First name is required')).toBeVisible();
     await expect(form.getByText('Last name is required')).toBeVisible();
     await expect(
@@ -69,7 +70,7 @@ test.describe('create a User', () => {
     // A failure is reported clearly, and the form stays as it was.
     await page.route('**/api/users', (route) => route.abort('failed'));
     await add.click();
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('alert')).toContainText(
       'The User could not be added',
     );
     await expect(page).toHaveURL(/\/users\/new$/);

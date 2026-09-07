@@ -15,14 +15,6 @@ $ease: motion.$ease;
   }
 }
 
-.create__eyebrow {
-  margin: 0;
-  font: var(--mat-sys-label-large);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--mat-sys-secondary);
-}
-
 .create__title {
   font-size: clamp(2rem, 3.5vw + 1rem, 3.5rem);
   line-height: 1.02;
@@ -76,19 +68,15 @@ $ease: motion.$ease;
   }
 }
 
-// The legend stands as the running title of the section: small, spaced,
-// in the secondary brand colour. On phones it heads the group; from
-// tablet up it sits in a margin column beside it. Floated, so the browser
-// does not render it on the fieldset's rule as it would a legend in flow.
+// The legend is the section's running title. On phones it heads the
+// group; from tablet up it sits in a margin column beside it. Floated, so
+// the browser does not render it on the fieldset's rule as it would a
+// legend in flow.
 .group__legend {
   float: left;
   width: 100%;
   margin-bottom: 0.75rem;
   padding: 0;
-  font: var(--mat-sys-label-large);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--mat-sys-secondary);
 
   @include bp.up(tablet) {
     width: auto;

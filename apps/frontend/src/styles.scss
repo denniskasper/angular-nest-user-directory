@@ -136,6 +136,39 @@ a {
   }
 }
 
+// A running title: the small, spaced line in the secondary brand colour
+// that heads a page, a section or a record.
+.eyebrow {
+  margin: 0;
+  font: var(--mat-sys-label-large);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mat-sys-secondary);
+}
+
+// A single glyph on a fingertip-sized round target: close, dismiss.
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border: 0;
+  border-radius: var(--mat-sys-corner-full);
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms,
+    color 160ms;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+  }
+}
+
 // The one button shape: a tinted pill sized for a fingertip. Primary by
 // default; a view recolours it where the context calls for it.
 .pill-button {

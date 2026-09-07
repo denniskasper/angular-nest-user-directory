@@ -11,6 +11,8 @@ export interface BootedApp {
   app: INestApplication;
   /** The directory holding this instance's store. */
   dataDir: string;
+  /** Stops the application and starts it again against the same store. */
+  restart(): Promise<void>;
   /** Closes the application and removes the store directory it was given. */
   close(): Promise<void>;
 }
@@ -19,26 +21,33 @@ export interface BootedApp {
  * Boots the whole application the way main.ts does — Seam 2 tests go
  * through this and nothing lower — against a store in a fresh temporary
  * directory, so specs never touch the real data directory or each other.
- * Pass `dataDir` to boot again against a store an earlier boot wrote.
  *
  * The application listens on an ephemeral port, so requests made in
  * parallel share one server rather than each starting and stopping it.
  */
-export async function bootApp(dataDir?: string): Promise<BootedApp> {
-  const dir = dataDir ?? (await mkdtemp(join(tmpdir(), 'pdr-cloud-')));
+export async function bootApp(): Promise<BootedApp> {
+  const dataDir = await mkdtemp(join(tmpdir(), 'pdr-cloud-'));
+  const booted: BootedApp = {
+    app: await start(dataDir),
+    dataDir,
+    async restart() {
+      await booted.app.close();
+      booted.app = await start(dataDir);
+    },
+    async close() {
+      await booted.app.close();
+      await rm(dataDir, { recursive: true, force: true });
+    },
+  };
+  return booted;
+}
+
+async function start(dataDir: string): Promise<INestApplication> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(USERS_STORE_PATH)
-    .useValue(join(dir, 'users.json'))
+    .useValue(join(dataDir, 'users.json'))
     .compile();
   const app = configureApp(moduleRef.createNestApplication());
   await app.listen(0);
-
-  return {
-    app,
-    dataDir: dir,
-    async close() {
-      await app.close();
-      await rm(dir, { recursive: true, force: true });
-    },
-  };
+  return app;
 }

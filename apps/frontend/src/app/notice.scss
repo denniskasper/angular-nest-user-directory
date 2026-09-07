@@ -66,22 +66,13 @@ $ease: motion.$ease;
   overflow-wrap: anywhere;
 }
 
+// The dismiss takes the slip's own colour, so it reads on the error tint.
 .notice__dismiss {
-  display: inline-grid;
-  place-items: center;
-  width: var(--touch-target);
-  height: var(--touch-target);
   margin-block: -0.5rem;
-  border: 0;
-  border-radius: var(--mat-sys-corner-full);
-  background: transparent;
   color: inherit;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: background-color 160ms;
 
   &:hover {
     background: color-mix(in oklab, currentColor 10%, transparent);
+    color: inherit;
   }
 }

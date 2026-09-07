@@ -46,18 +46,13 @@ describe('POST /api/users', () => {
 
   it('keeps the User across a restart', async () => {
     await request(booted.app.getHttpServer()).post('/api/users').send(ada);
-    await booted.app.close();
+    await booted.restart();
 
-    const restarted = await bootApp(booted.dataDir);
-    try {
-      const fetched = await request(restarted.app.getHttpServer()).get(
-        '/api/users/101',
-      );
-      expect(fetched.status).toBe(200);
-      expect(fetched.body).toEqual({ id: 101, ...ada });
-    } finally {
-      await restarted.app.close();
-    }
+    const fetched = await request(booted.app.getHttpServer()).get(
+      '/api/users/101',
+    );
+    expect(fetched.status).toBe(200);
+    expect(fetched.body).toEqual({ id: 101, ...ada });
   });
 
   it('assigns distinct ids under concurrent creation and persists every User', async () => {
@@ -73,19 +68,12 @@ describe('POST /api/users', () => {
     const ids = responses.map((r) => r.body.id as number).sort((a, b) => a - b);
     expect(ids).toEqual(Array.from({ length: 20 }, (_, i) => 101 + i));
 
-    await booted.app.close();
-    const restarted = await bootApp(booted.dataDir);
-    try {
-      const listed = await request(restarted.app.getHttpServer()).get(
-        '/api/users',
-      );
-      expect(listed.body).toHaveLength(120);
-      expect(listed.body.map((u: { id: number }) => u.id).slice(100)).toEqual(
-        ids,
-      );
-    } finally {
-      await restarted.app.close();
-    }
+    await booted.restart();
+    const listed = await request(booted.app.getHttpServer()).get('/api/users');
+    expect(listed.body).toHaveLength(120);
+    expect(listed.body.map((u: { id: number }) => u.id).slice(100)).toEqual(
+      ids,
+    );
   });
 
   it('rejects input the form would reject, naming every field at fault', async () => {

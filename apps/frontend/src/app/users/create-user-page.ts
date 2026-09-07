@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   inject,
   signal,
 } from '@angular/core';
@@ -47,6 +48,9 @@ const EMPTY_DRAFT: Draft = {
   role: '',
 };
 
+/** The controls in reading order, for finding the first at fault. */
+const FIELDS = Object.keys(EMPTY_DRAFT) as (keyof Draft)[];
+
 /**
  * The draft as the creation schema sees it. A blank optional field is an
  * absence, not an empty string, so the value validated here is exactly the
@@ -77,7 +81,9 @@ function describeFailure(error: unknown): string {
  * accept what the server rejects, nor reject what it would accept
  * (spec.md, Shared rules module). Field-level problems appear inline; the
  * outcome of a submission is announced as a notice, and a success returns
- * to the directory searched for the new User's Full Name.
+ * to the directory searched for the new User's Full Name. A submit that
+ * fails in the browser moves focus to the first control at fault, whose
+ * error is read with it.
  *
  * Single column and full width on phones; from tablet up the name and the
  * contact pairs sit side by side (create-user-page.scss).
@@ -106,6 +112,7 @@ export class CreateUserPage {
     });
   });
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly notices = inject(Notices);
@@ -118,23 +125,39 @@ export class CreateUserPage {
 
   protected onSubmit(event: Event): void {
     event.preventDefault();
-    submit(this.form, async () => {
-      const input = createUserSchema.parse(toInput(this.draft()));
-      try {
-        const user = await firstValueFrom(
-          this.http.post<User>('/api/users', input),
-        );
-        this.notices.announce({
-          tone: 'success',
-          text: `${fullName(user)} was added as User #${user.id}.`,
-        });
-        await this.router.navigate(['/'], {
-          queryParams: { search: fullName(user) },
-        });
-      } catch (error) {
-        this.notices.announce({ tone: 'error', text: describeFailure(error) });
-      }
-      return undefined;
+    submit(this.form, {
+      action: async () => {
+        try {
+          const user = await firstValueFrom(
+            this.http.post<User>(
+              '/api/users',
+              createUserSchema.parse(toInput(this.draft())),
+            ),
+          );
+          this.notices.announce({
+            tone: 'success',
+            text: `${fullName(user)} was added as User #${user.id}.`,
+          });
+          await this.router.navigate(['/'], {
+            queryParams: { search: fullName(user) },
+          });
+        } catch (error) {
+          this.notices.announce({
+            tone: 'error',
+            text: describeFailure(error),
+          });
+        }
+        return undefined;
+      },
+      onInvalid: () => this.focusFirstInvalid(),
     });
+  }
+
+  private focusFirstInvalid(): void {
+    const first = FIELDS.find((field) => this.form[field]().invalid());
+    if (!first) return;
+    this.host.nativeElement
+      .querySelector<HTMLElement>(`[data-field="${first}"]`)
+      ?.focus();
   }
 }

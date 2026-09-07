@@ -88,11 +88,6 @@ $ease: motion.$ease;
 .detail__eyebrow {
   grid-area: eyebrow;
   align-self: center;
-  margin: 0;
-  font: var(--mat-sys-label-large);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--mat-sys-secondary);
 }
 
 // The id, set as a figure in the brand serif so it reads as the record's
@@ -129,26 +124,14 @@ $ease: motion.$ease;
 
 .detail__close {
   grid-area: close;
-  display: inline-grid;
-  place-items: center;
-  width: var(--touch-target);
-  height: var(--touch-target);
   margin: -0.5rem -0.5rem 0 0;
-  border: 0;
-  border-radius: var(--mat-sys-corner-full);
-  background: transparent;
-  color: var(--mat-sys-on-surface-variant);
   font-size: 1.75rem;
-  line-height: 1;
-  cursor: pointer;
   transition:
     background-color 160ms,
     color 160ms,
     transform 300ms $ease;
 
   &:hover {
-    background: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface);
     transform: rotate(90deg);
   }
 }

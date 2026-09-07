@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { presentation } from './presentation';
 
 /**
  * Seam 3 (spec.md, Testing Decisions): the browser. These assertions cover
@@ -92,7 +93,7 @@ test.describe('app shell', () => {
     const main = await page.getByRole('main').boundingBox();
     if (!viewport || !main) throw new Error('viewport and main must exist');
 
-    if (test.info().project.name === 'phone') {
+    if (presentation(page).phone) {
       // Phone: the content column is the whole viewport, edge to edge.
       expect(main.x).toBe(0);
       expect(main.width).toBe(viewport.width);

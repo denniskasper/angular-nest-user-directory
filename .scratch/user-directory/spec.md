@@ -6,7 +6,7 @@ Status: ready-for-agent
 
 There is no way to see, search or add the people recorded in the system. The Seed Data exists as a raw file, and part of it is malformed — misspelled field names, ids stored as text, an impossible birth date, several unusable email addresses — so anything reading it naively either shows broken rows or silently discards people.
 
-Separately, what a User is *required* to provide is not uniform: it depends on their Role. Expressing that rule once, and having both the browser and the server agree on it, is the core difficulty. If the two disagree, a form can accept input the server rejects, or reject input the server would accept.
+Separately, what a User is _required_ to provide is not uniform: it depends on their Role. Expressing that rule once, and having both the browser and the server agree on it, is the core difficulty. If the two disagree, a form can accept input the server rejects, or reject input the server would accept.
 
 ## Solution
 
@@ -93,10 +93,10 @@ These are deliberately different, per ADR-0001. A field may be required at creat
 
 **The Conditional Requirement contract.**
 
-| Role | phoneNumber | birthDate |
-|---|---|---|
-| `admin` | required | required |
-| `editor` | required | not required |
+| Role     | phoneNumber  | birthDate    |
+| -------- | ------------ | ------------ |
+| `admin`  | required     | required     |
+| `editor` | required     | not required |
 | `viewer` | not required | not required |
 
 Implemented as a refinement over a flat object rather than as a union keyed on Role, so that each issue carries the path of the specific field at fault and maps directly onto a single form control. The refinement is configured to run even when another field has already failed, so Role-dependent errors surface alongside other errors rather than after them.
@@ -138,13 +138,15 @@ The detail view presents as a full-screen surface on phones and as a centred dia
 
 **Workspace.** A single monorepo holding the two applications and the shared module. Per ADR-0003, the workspace is created from the Angular preset and the server application added afterwards, because the framework rejects the tooling's default project layout.
 
+**Deployment.** One container, one process: the API serves the built frontend beside itself when told where it is, so the browser's relative `/api` requests need neither a proxy nor CORS. The store is a volume outside the image. A GitHub Actions workflow runs the checks and only then asks the host to deploy, so a red run never goes live. Development is unchanged: the development server serves the frontend and proxies the API.
+
 ## Testing Decisions
 
 A good test here asserts externally observable behaviour — what a caller, a client or a person sees — and never reaches into how a result was produced. Tests are written at the highest seam that can prove the behaviour, and there are exactly three seams.
 
 **Seam 1 — the shared rules module's parse boundary.** A pure input-to-issues function. This is where the Conditional Requirement is proved exhaustively: for each of the three Roles, that a complete record is accepted, and that omitting each field the Role requires is rejected with an issue naming that field. Also covered here: that a Role outside the three permitted values is rejected, and that an error in an unrelated field does not suppress the Role-dependent issues. This is the highest-value seam because both applications consume this exact boundary.
 
-**Seam 2 — the HTTP API boundary.** Exercised through the running application, never against service or repository classes directly. Covers: listing returns the expected shape and count; paging and search narrow correctly and report the correct total; fetching a known id returns that User and an unknown id does not; creation rejects records violating the Conditional Requirement with field-keyed messages; creation accepts a valid record, assigns an id and returns it; and a created User is still present when read back. Normalization is proved through this same seam — after starting against the provided Seed Data, all 100 Users are listed, the records with misspelled field names carry their values under the correct names, ids that were text are numbers, and the unsalvageable values read as absent. No separate seam is opened on the normalizer, the repository or the write queue.
+**Seam 2 — the HTTP API boundary.** Exercised through the running application, never against service or repository classes directly. Covers: listing returns the expected shape and count; paging and search narrow correctly and report the correct total; fetching a known id returns that User and an unknown id does not; creation rejects records violating the Conditional Requirement with field-keyed messages; creation accepts a valid record, assigns an id and returns it; and a created User is still present when read back. Normalization is proved through this same seam — after starting against the provided Seed Data, all 100 Users are listed, the records with misspelled field names carry their values under the correct names, ids that were text are numbers, and the unsalvageable values read as absent. No separate seam is opened on the normalizer, the repository or the write queue. The served frontend the public deployment adds beside the API is proved through this seam as well: the page on any route outside the API, the cache rules that differ between `index.html` and the hashed files, compression, and the API answering unchanged beside it.
 
 **Seam 3 — the browser, via Playwright.** Four specs, kept deliberately minimal: the list renders and pages; search narrows the results; creating a User succeeds and the confirmation appears and the new User is visible; and selecting the admin Role while leaving phoneNumber empty shows an inline error against that field. The last of these is the only test that proves the shared rules working through the entire stack, which is why it is included in a minimal set.
 

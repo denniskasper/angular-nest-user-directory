@@ -36,7 +36,7 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 # The API build writes a package.json and lockfile naming only what the
-# bundle requires at runtime (five packages and their dependencies), so this
+# bundle requires at runtime (eight packages and their dependencies), so this
 # install is small and has nothing to do with the workspace's devDependencies.
 COPY --from=build /app/dist/apps/api/package.json /app/dist/apps/api/package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \

@@ -11,6 +11,11 @@ The public instance holds the 100 fictional Users of the Seed Data and
 accepts new ones from anyone, as the form does locally. See
 [Deployment](#deployment).
 
+- [The directory](https://user-directory.denniskasper.dev)
+- [The smiley](https://user-directory.denniskasper.dev/smiley)
+- [The API documentation](https://user-directory.denniskasper.dev/api/docs)
+  (raw OpenAPI at [`/api/docs-json`](https://user-directory.denniskasper.dev/api/docs-json))
+
 ```
 apps/frontend      Angular 22 + Angular Material (Material 3), zoneless
 apps/frontend-e2e  Playwright specs, run at a phone and a desktop viewport
@@ -291,7 +296,8 @@ below them:
 2. **The HTTP API** (`apps/api`), through the whole booted application:
    listing, paging, search, fetching by id, creation and its field-keyed
    failures, persistence across a restart, Normalization of the Seed Data,
-   the reset script, and the generated documentation.
+   the reset script, the generated documentation, and the served frontend
+   the container adds beside the API.
 3. **The browser** (`apps/frontend-e2e`), Playwright at a phone and a
    desktop viewport. Four deliberately minimal directory specs: the list
    renders and pages, search narrows, creation succeeds and shows the new
@@ -352,7 +358,7 @@ docker run -p 3000:3000 user-directory
 The [`Dockerfile`](Dockerfile) builds in two stages. The first runs the same
 `nx` builds as `npm run build`; the second installs only what the API bundle
 requires at runtime (the lockfile the build writes to `dist/apps/api` names
-five packages) and copies in the bundle and the built frontend. Nothing else
+eight packages) and copies in the bundle and the built frontend. Nothing else
 from the workspace is in the image. It runs as the unprivileged `node` user
 and answers a `HEALTHCHECK` at `/api` every 30 seconds.
 
@@ -426,6 +432,13 @@ URL:
 deploy/smoke-test.sh https://user-directory.denniskasper.dev
 ```
 
+### Versioning
+
+[Semantic Versioning](https://semver.org/), from `v0.1.0`. The version is
+stated once, in the root `package.json`; the frontend's footer and the API
+documentation read it from there, and a release is the git tag `v<version>`
+on the commit that sets it. The rules are in `AGENTS.md`.
+
 ## How this was built
 
 The order was documentation first, then code. `.scratch/user-directory/`
@@ -436,7 +449,8 @@ each with a comment recording what was verified and what the review changed.
 The coding agents worked from those documents using the skills under
 `.agents/skills/` (test-driven development at agreed seams, a two-axis code
 review against the spec and the repo's standards, domain modelling, frontend
-design) with `AGENTS.md` and `docs/agents/` as the standing instructions.
+design, containerisation, and a wizard for the steps only a person can take
+at the infrastructure) with `AGENTS.md` and `docs/agents/` as the standing instructions.
 `.claude/skills` is a symlink to the same skills directory. All of it is
 kept in the repository so the reasoning behind the code can be read alongside
 it. The challenge materials themselves are not part of the submission and

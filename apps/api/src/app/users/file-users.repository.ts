@@ -1,20 +1,28 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { User } from '@pdr-cloud/shared';
+import { storedUserSchema, User } from '@pdr-cloud/shared';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import seed from '../../assets/seed/users.json';
-import { NormalizationReport, normalizeSeedData } from './normalization';
+import { z } from 'zod';
+import { describeReport, normalizeSeedData } from './normalization';
 import { UsersRepository } from './users.repository';
 import { USERS_STORE_PATH } from './users-store-path';
+
+const storeSchema = z.array(storedUserSchema);
 
 /**
  * Holds the Users in memory as the source of truth for reads, backed by a
  * JSON file. On first start, when no store exists, the Seed Data is
  * normalized once and written as the store; every later start reads the
- * store as it is. The Seed Data asset itself is only ever read.
+ * store as it is, validated against the stored schema (ADR-0001) so a
+ * corrupt or hand-edited store fails at startup rather than serving
+ * malformed Users. The Seed Data asset itself is only ever read.
  */
 @Injectable()
-export class FileUsersRepository extends UsersRepository implements OnModuleInit {
+export class FileUsersRepository
+  extends UsersRepository
+  implements OnModuleInit
+{
   private readonly logger = new Logger(FileUsersRepository.name);
   private users: readonly User[] = [];
 
@@ -40,12 +48,23 @@ export class FileUsersRepository extends UsersRepository implements OnModuleInit
     return this.users;
   }
 
+  /** The stored Users, or undefined when no store has been written yet. */
   private async readStore(): Promise<User[] | undefined> {
+    let raw: string;
     try {
-      return JSON.parse(await readFile(this.storePath, 'utf8')) as User[];
+      raw = await readFile(this.storePath, 'utf8');
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
       throw error;
+    }
+
+    try {
+      return storeSchema.parse(JSON.parse(raw));
+    } catch (error) {
+      throw new Error(
+        `The Users store at ${this.storePath} is not readable (${(error as Error).message}). ` +
+          'Remove it to run Normalization again from the Seed Data.',
+      );
     }
   }
 
@@ -56,19 +75,4 @@ export class FileUsersRepository extends UsersRepository implements OnModuleInit
     await writeFile(temporary, JSON.stringify(users, null, 2) + '\n', 'utf8');
     await rename(temporary, this.storePath);
   }
-}
-
-function describeReport(report: NormalizationReport, storePath: string): string {
-  const lines = [
-    `Normalization repaired ${report.repaired.length} of ${report.total} Seed Data records; store written to ${storePath}`,
-  ];
-  for (const repair of report.repaired) {
-    const actions = [
-      ...repair.renamed.map((r) => `renamed ${r}`),
-      ...repair.retyped.map((f) => `${f} converted from text`),
-      ...repair.cleared.map((c) => `cleared ${c.field} (was ${JSON.stringify(c.value)})`),
-    ];
-    lines.push(`  #${repair.id}: ${actions.join('; ')}`);
-  }
-  return lines.join('\n');
 }

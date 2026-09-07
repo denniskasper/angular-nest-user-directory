@@ -7,13 +7,17 @@ const FIELD_ALIASES: Readonly<Record<string, keyof User>> = {
 };
 
 /** Fields a stored User may lack (ADR-0001), so an unusable value can be cleared rather than the record dropped. */
-const CLEARABLE_FIELDS: ReadonlySet<string> = new Set<keyof User>(['email', 'phoneNumber', 'birthDate']);
+const CLEARABLE_FIELDS: ReadonlySet<string> = new Set<keyof User>([
+  'email',
+  'phoneNumber',
+  'birthDate',
+]);
 
 /** What Normalization did to one Legacy Record. */
 export interface RecordRepair {
   id: unknown;
-  /** Misspelled field names corrected, as `from → to`. */
-  renamed: string[];
+  /** Misspelled field names corrected to their canonical names. */
+  renamed: { from: string; to: string }[];
   /** Fields whose value was held as the wrong type and converted. */
   retyped: string[];
   /** Fields whose value could not be salvaged, with the value that was cleared. */
@@ -37,14 +41,19 @@ export interface NormalizationResult {
  * after that is a defect in the Seed Data or in this function, and is
  * reported by throwing rather than by quietly losing a User.
  */
-export function normalizeSeedData(records: readonly unknown[]): NormalizationResult {
+export function normalizeSeedData(
+  records: readonly unknown[],
+): NormalizationResult {
   const users: User[] = [];
   const repaired: RecordRepair[] = [];
 
   for (const record of records) {
     const { user, repair } = normalizeRecord(record);
     users.push(user);
-    if (repair.renamed.length + repair.retyped.length + repair.cleared.length > 0) {
+    if (
+      repair.renamed.length + repair.retyped.length + repair.cleared.length >
+      0
+    ) {
       repaired.push(repair);
     }
   }
@@ -52,15 +61,23 @@ export function normalizeSeedData(records: readonly unknown[]): NormalizationRes
   return { users, report: { total: records.length, repaired } };
 }
 
-function normalizeRecord(record: unknown): { user: User; repair: RecordRepair } {
+function normalizeRecord(record: unknown): {
+  user: User;
+  repair: RecordRepair;
+} {
   const fields = { ...(record as Record<string, unknown>) };
-  const repair: RecordRepair = { id: fields['id'], renamed: [], retyped: [], cleared: [] };
+  const repair: RecordRepair = {
+    id: fields['id'],
+    renamed: [],
+    retyped: [],
+    cleared: [],
+  };
 
   for (const [alias, canonical] of Object.entries(FIELD_ALIASES)) {
     if (alias in fields) {
       fields[canonical] = fields[alias];
       delete fields[alias];
-      repair.renamed.push(`${alias} → ${canonical}`);
+      repair.renamed.push({ from: alias, to: canonical });
     }
   }
 
@@ -82,8 +99,33 @@ function normalizeRecord(record: unknown): { user: User; repair: RecordRepair } 
 
   const secondPass = storedUserSchema.safeParse(fields);
   if (!secondPass.success) {
-    const problems = secondPass.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
-    throw new Error(`Seed Data record with id ${JSON.stringify(repair.id)} cannot be normalized (${problems})`);
+    const problems = secondPass.error.issues
+      .map((i) => `${i.path.join('.')}: ${i.message}`)
+      .join('; ');
+    throw new Error(
+      `Seed Data record with id ${JSON.stringify(repair.id)} cannot be normalized (${problems})`,
+    );
   }
   return { user: secondPass.data, repair };
+}
+
+/** The report as it is logged at startup: the count, then one line per repaired id. */
+export function describeReport(
+  report: NormalizationReport,
+  storePath: string,
+): string {
+  const lines = [
+    `Normalization repaired ${report.repaired.length} of ${report.total} Seed Data records; store written to ${storePath}`,
+  ];
+  for (const repair of report.repaired) {
+    const actions = [
+      ...repair.renamed.map((r) => `renamed ${r.from} → ${r.to}`),
+      ...repair.retyped.map((f) => `${f} converted from text`),
+      ...repair.cleared.map(
+        (c) => `cleared ${c.field} (was ${JSON.stringify(c.value)})`,
+      ),
+    ];
+    lines.push(`  #${repair.id}: ${actions.join('; ')}`);
+  }
+  return lines.join('\n');
 }

@@ -4,6 +4,8 @@ import request from 'supertest';
 import { BootedApp, bootApp } from '../../testing/boot-app';
 
 const SEED_ASSET = `${import.meta.dirname}/../../assets/seed/users.json`;
+/** Read before any spec boots the application, so a first-start mutation could not hide in the baseline. */
+const seedAssetBeforeAnyStart = readFile(SEED_ASSET, 'utf8');
 
 /**
  * Seam 2 (spec.md, Testing Decisions): Normalization is proved through the
@@ -22,7 +24,9 @@ describe('Normalization of the Seed Data', () => {
   });
 
   const listUsers = async () => {
-    const response = await request(booted.app.getHttpServer()).get('/api/users');
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users',
+    );
     expect(response.status).toBe(200);
     return response.body as Record<string, unknown>[];
   };
@@ -80,11 +84,9 @@ describe('Normalization of the Seed Data', () => {
   });
 
   it('leaves the Seed Data asset untouched', async () => {
-    const before = await readFile(SEED_ASSET, 'utf8');
-    const again = await bootApp();
-    await again.close();
-
-    expect(await readFile(SEED_ASSET, 'utf8')).toBe(before);
+    expect(await readFile(SEED_ASSET, 'utf8')).toBe(
+      await seedAssetBeforeAnyStart,
+    );
   });
 });
 
@@ -95,16 +97,22 @@ describe('Normalization runs once', () => {
       const first = await bootApp();
       await first.app.close();
       const second = await bootApp(first.dataDir);
-      const response = await request(second.app.getHttpServer()).get('/api/users');
+      const response = await request(second.app.getHttpServer()).get(
+        '/api/users',
+      );
       await second.close();
 
-      const reports = log.mock.calls.map(([message]) => String(message)).filter((m) => m.startsWith('Normalization'));
+      // The startup report is the observable the ticket asks for: how many
+      // records, which fields, which ids. Its exact wording is not.
+      const reports = log.mock.calls
+        .map(([message]) => String(message))
+        .filter((m) => m.startsWith('Normalization'));
       expect(reports).toHaveLength(1);
-      expect(reports[0]).toContain('repaired 12 of 100');
-      expect(reports[0]).toContain('#1: cleared birthDate (was "31-31-9999")');
-      expect(reports[0]).toContain('#8: cleared email (was "not-an-email")');
-      expect(reports[0]).toContain('#5: renamed fistName → firstName');
-      expect(reports[0]).toContain('#74: id converted from text');
+      expect(reports[0]).toContain('12 of 100');
+      expect(reports[0]).toMatch(/#1\b.*birthDate/);
+      expect(reports[0]).toMatch(/#8\b.*email/);
+      expect(reports[0]).toMatch(/#5\b.*firstName/);
+      expect(reports[0]).toMatch(/#74\b.*\bid\b/);
       expect(response.body).toHaveLength(100);
     } finally {
       log.mockRestore();

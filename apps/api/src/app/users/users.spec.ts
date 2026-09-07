@@ -17,14 +17,18 @@ describe('GET /api/users', () => {
   });
 
   it('returns every User when called with no parameters', async () => {
-    const response = await request(booted.app.getHttpServer()).get('/api/users');
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users',
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(100);
   });
 
   it('carries each User with id, names, email and Role', async () => {
-    const response = await request(booted.app.getHttpServer()).get('/api/users');
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users',
+    );
 
     expect(response.body).toContainEqual({
       id: 7,
@@ -38,7 +42,9 @@ describe('GET /api/users', () => {
   });
 
   it('lists a Legacy Record with its absent fields absent, not blanked', async () => {
-    const response = await request(booted.app.getHttpServer()).get('/api/users');
+    const response = await request(booted.app.getHttpServer()).get(
+      '/api/users',
+    );
     const user = response.body.find((u: { id: unknown }) => u.id === 25);
 
     expect(user).toMatchObject({ firstName: 'Amanda', lastName: 'Miller' });

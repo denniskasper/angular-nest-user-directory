@@ -15,6 +15,13 @@ const ada = {
   role: 'editor',
 };
 
+/** Ada without the fields a Role may require. */
+function without(...fields: ('phoneNumber' | 'birthDate')[]) {
+  const input: Partial<typeof ada> = { ...ada };
+  for (const field of fields) delete input[field];
+  return input;
+}
+
 describe('POST /api/users', () => {
   let booted: BootedApp;
 
@@ -98,9 +105,7 @@ describe('POST /api/users', () => {
   });
 
   it('enforces the Conditional Requirement from the shared definition', async () => {
-    const { phoneNumber, birthDate, ...bare } = ada;
-    void phoneNumber;
-    void birthDate;
+    const bare = without('phoneNumber', 'birthDate');
 
     const admin = await request(booted.app.getHttpServer())
       .post('/api/users')
@@ -130,15 +135,22 @@ describe('POST /api/users', () => {
   });
 
   it('reports a Role-dependent fault alongside an unrelated one', async () => {
-    const { phoneNumber, ...withoutPhone } = ada;
-    void phoneNumber;
-
     const response = await request(booted.app.getHttpServer())
       .post('/api/users')
-      .send({ ...withoutPhone, email: 'nope', role: 'admin' });
+      .send({ ...without('phoneNumber'), email: 'nope', role: 'admin' });
 
     expect(response.status).toBe(400);
     expect(Object.keys(response.body.fields)).toEqual(['email', 'phoneNumber']);
+  });
+
+  it('carries a fault with no field of its own in the message', async () => {
+    const response = await request(booted.app.getHttpServer())
+      .post('/api/users')
+      .send([ada]);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toMatch(/expected object/);
+    expect(response.body.fields).toEqual({});
   });
 
   it('never stores an id a client sends', async () => {

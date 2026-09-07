@@ -93,6 +93,7 @@
             type="tel"
             autocomplete="tel"
             [formField]="form.phoneNumber"
+            [attr.aria-required]="!!phoneNumberRequiredBy"
             [attr.aria-invalid]="!!phoneNumberError"
             [attr.aria-describedby]="phoneNumberError ? 'phoneNumber-error' : null"
           />
@@ -126,6 +127,7 @@
             type="date"
             autocomplete="bday"
             [formField]="form.birthDate"
+            [attr.aria-required]="!!birthDateRequiredBy"
             [attr.aria-invalid]="!!birthDateError"
             [attr.aria-describedby]="birthDateError ? 'birthDate-error' : null"
           />

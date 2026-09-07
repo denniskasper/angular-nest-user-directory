@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  CONDITIONAL_REQUIREMENT_PARAMS,
+  CONDITIONAL_REQUIREMENT,
   conditionalRequirementMessage,
   requiredFieldsFor,
 } from './conditional-requirement';
@@ -41,7 +41,7 @@ export const createUserSchema = z
           code: 'custom',
           path: [field],
           message: conditionalRequirementMessage(role, field),
-          params: { ...CONDITIONAL_REQUIREMENT_PARAMS, role },
+          params: { rule: CONDITIONAL_REQUIREMENT },
         });
       }
     },

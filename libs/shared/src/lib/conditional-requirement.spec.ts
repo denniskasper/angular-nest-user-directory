@@ -1,8 +1,5 @@
 import { createUserSchema } from './create-user';
-import {
-  isConditionalRequirementIssue,
-  requiredFieldsFor,
-} from './conditional-requirement';
+import { isConditionalRequirementIssue } from './conditional-requirement';
 
 /**
  * Seam 1 (spec.md, Testing Decisions): the shared module's parse boundary,
@@ -30,16 +27,6 @@ describe('the Conditional Requirement', () => {
       ? []
       : result.error.issues.map((issue) => String(issue.path[0]));
   }
-
-  it.each([
-    ['admin', ['phoneNumber', 'birthDate']],
-    ['editor', ['phoneNumber']],
-    ['viewer', []],
-  ])('says which fields %s requires', (role, fields) => {
-    expect(requiredFieldsFor(role as 'admin' | 'editor' | 'viewer')).toEqual(
-      fields,
-    );
-  });
 
   describe('admin', () => {
     it('accepts a complete record', () => {

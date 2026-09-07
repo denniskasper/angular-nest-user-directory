@@ -1,9 +1,7 @@
 import { Role } from './role';
 
 /** The fields a Role may make required. */
-export const CONDITIONAL_FIELDS = ['phoneNumber', 'birthDate'] as const;
-
-export type ConditionalField = (typeof CONDITIONAL_FIELDS)[number];
+export type ConditionalField = 'phoneNumber' | 'birthDate';
 
 /**
  * The Conditional Requirement (CONTEXT.md): which fields a User must
@@ -22,7 +20,13 @@ export function requiredFieldsFor(role: Role): readonly ConditionalField[] {
   return REQUIRED_BY_ROLE[role];
 }
 
-const FIELD_NAMES: Record<ConditionalField, string> = {
+const ROLE_SUBJECTS: Record<Role, string> = {
+  admin: 'An admin',
+  editor: 'An editor',
+  viewer: 'A viewer',
+};
+
+const FIELD_OBJECTS: Record<ConditionalField, string> = {
   phoneNumber: 'a phone number',
   birthDate: 'a birth date',
 };
@@ -32,8 +36,7 @@ export function conditionalRequirementMessage(
   role: Role,
   field: ConditionalField,
 ): string {
-  const subject = role === 'admin' || role === 'editor' ? 'An' : 'A';
-  return `${subject} ${role} must have ${FIELD_NAMES[field]}`;
+  return `${ROLE_SUBJECTS[role]} must have ${FIELD_OBJECTS[field]}`;
 }
 
 /**
@@ -42,12 +45,10 @@ export function conditionalRequirementMessage(
  * been visited needs the distinction: a field a Role has just made required
  * is at fault the moment the Role is chosen, before anyone visits it.
  */
-export const CONDITIONAL_REQUIREMENT_PARAMS = {
-  rule: 'conditionalRequirement',
-} as const;
+export const CONDITIONAL_REQUIREMENT = 'conditionalRequirement';
 
 export function isConditionalRequirementIssue(issue: unknown): boolean {
   if (typeof issue !== 'object' || issue === null) return false;
   const params = (issue as { params?: { rule?: unknown } }).params;
-  return params?.rule === CONDITIONAL_REQUIREMENT_PARAMS.rule;
+  return params?.rule === CONDITIONAL_REQUIREMENT;
 }

@@ -17,6 +17,7 @@ import {
 } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import {
+  CONDITIONAL_REQUIREMENT,
   ConditionalField,
   createUserSchema,
   fullName,
@@ -58,13 +59,14 @@ const EMPTY_DRAFT: Draft = {
 const FIELDS = Object.keys(EMPTY_DRAFT) as (keyof Draft)[];
 
 /**
- * The kinds of error a control can carry. A `standardSchema` error is
- * about the person's own entry — malformed, or missing where every User
+ * The kinds of error a control can carry. One `standardSchemaError` makes
+ * is about the person's own entry — malformed, or missing where every User
  * needs it — and waits until they have been to the control. The other two
- * are caused from outside it: the Role they chose making it required, or
- * the server's answer. Those show at once.
+ * are caused from outside it: the Role they chose making it required
+ * (`CONDITIONAL_REQUIREMENT`, from the shared module), or the server's
+ * answer. Those show at once.
  */
-const CONDITIONAL_REQUIREMENT = 'conditionalRequirement';
+const STANDARD_SCHEMA = 'standardSchema';
 const SERVER = 'server';
 
 /**
@@ -152,7 +154,7 @@ export class CreateUserPage {
     const state = field();
     const shown = state.touched()
       ? state.errors()
-      : state.errors().filter((error) => error.kind !== 'standardSchema');
+      : state.errors().filter((error) => error.kind !== STANDARD_SCHEMA);
     return shown[0]?.message;
   }
 
@@ -185,7 +187,9 @@ export class CreateUserPage {
 
   /**
    * Announces why the User was not added and, when the server named the
-   * fields at fault, attaches its message to each of them.
+   * fields at fault, attaches its message to each control. A message about
+   * a field the form does not have is carried in the notice instead, so
+   * it is never lost.
    */
   private reportFailure(error: unknown): ValidationError.WithOptionalFieldTree[] {
     const failure = validationFailureOf(error);
@@ -196,18 +200,27 @@ export class CreateUserPage {
       });
       return [];
     }
-    const errors = Object.entries(failure.fields).flatMap(([field, messages]) =>
-      messages.map((message) => ({
-        kind: SERVER,
-        message,
-        fieldTree: this.form[field as keyof Draft],
-      })),
-    );
+    const errors: ValidationError.WithOptionalFieldTree[] = [];
+    const unplaced: string[] = [];
+    for (const [field, messages] of Object.entries(failure.fields)) {
+      const fieldTree = FIELDS.includes(field as keyof Draft)
+        ? this.form[field as keyof Draft]
+        : undefined;
+      for (const message of messages) {
+        if (fieldTree) errors.push({ kind: SERVER, message, fieldTree });
+        else unplaced.push(`${field}: ${message}`);
+      }
+    }
+    if (!errors.length && !unplaced.length) unplaced.push(failure.message);
     this.notices.announce({
       tone: 'error',
-      text: errors.length
-        ? 'The directory rejected this User. See the fields marked.'
-        : `The directory rejected this User: ${failure.message}.`,
+      text: [
+        'The directory rejected this User.',
+        errors.length ? 'See the fields marked.' : '',
+        unplaced.length ? `${unplaced.join('; ')}.` : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
     });
     return errors;
   }

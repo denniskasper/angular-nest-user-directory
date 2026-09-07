@@ -197,18 +197,15 @@ $nav-link-pad: 0.875rem;
   color: var(--mat-sys-on-surface-variant);
 }
 
-// The release, set apart at the far end as a small hairline seal so it reads
-// as a mark rather than as part of the sentence. Tabular figures keep it
-// steady from one release to the next.
+// The release, set apart at the far end in the same small voice as the
+// text, with nothing drawn around it. Tabular figures keep it steady from
+// one release to the next.
 .foot__version {
   margin-inline-start: auto;
   flex: none;
-  padding: 0.125rem 0.5rem;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-full);
-  font: var(--mat-sys-label-small);
+  font: var(--mat-sys-body-small);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--mat-sys-on-surface-variant);
 }
 

@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import {
   CONDITIONAL_REQUIREMENT,
+  conditionalFieldDescription,
+  conditionalRequirementDocumentation,
   conditionalRequirementMessage,
   requiredFieldsFor,
 } from './conditional-requirement';
@@ -19,14 +21,26 @@ import { Role, USER_ROLES } from './role';
  * field. The refinement runs even when another field has already failed,
  * so Role-dependent issues surface alongside the others rather than after
  * them. The id is never part of the input: the server assigns it.
+ *
+ * The API documentation is generated from this schema. A refinement has no
+ * JSON Schema of its own, so the Conditional Requirement is attached as
+ * metadata derived from the same table the refinement reads.
  */
 export const createUserSchema = z
   .object({
     firstName: z.string().trim().min(1, 'First name is required'),
     lastName: z.string().trim().min(1, 'Last name is required'),
     email: z.email('Enter an email address, like name@example.org'),
-    phoneNumber: z.string().trim().min(1, 'Enter a phone number').optional(),
-    birthDate: z.iso.date('Enter a date as YYYY-MM-DD').optional(),
+    phoneNumber: z
+      .string()
+      .trim()
+      .min(1, 'Enter a phone number')
+      .optional()
+      .describe(conditionalFieldDescription('phoneNumber')),
+    birthDate: z.iso
+      .date('Enter a date as YYYY-MM-DD')
+      .optional()
+      .describe(conditionalFieldDescription('birthDate')),
     role: z.enum(USER_ROLES, 'Choose admin, editor or viewer'),
   })
   .superRefine(
@@ -46,6 +60,7 @@ export const createUserSchema = z
       }
     },
     { when: () => true },
-  );
+  )
+  .meta({ id: 'CreateUser', ...conditionalRequirementDocumentation() });
 
 export type CreateUser = z.infer<typeof createUserSchema>;

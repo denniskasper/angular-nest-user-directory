@@ -7,7 +7,7 @@ that both consume.
 ```
 apps/frontend   Angular 22 + Angular Material, zoneless
 apps/api        NestJS 12
-libs/shared     the module both applications consume (Role vocabulary, User schema)
+libs/shared     the module both applications consume (Role vocabulary, User schemas, Conditional Requirement)
 ```
 
 ## Requirements
@@ -56,14 +56,19 @@ npm run build
 
 ## API
 
-| Route            | Returns                     |
-| ---------------- | --------------------------- |
-| `GET /api/users` | every User, as a JSON array |
+Browsable documentation is served by the API itself at
+`http://localhost:3000/api/docs` (the raw OpenAPI document is at
+`/api/docs-json`). It is generated from the shared schemas rather than
+written by hand: the body of `POST /api/users` is documented from the same
+creation schema that validates it, so the Conditional Requirement (an admin
+must have a phone number and a birth date; an editor a phone number; a
+viewer neither) is expressed once, in `libs/shared`, and cannot drift from
+what the form and the server enforce.
 
 The Seed Data (the 100 Users from the challenge) is committed as an
-application asset at `apps/api/src/assets/seed/users.json` and served as-is
-for now; Normalization of its malformed records is a later ticket, so a few
-Legacy Records still carry misspelled field names and text ids.
+application asset at `apps/api/src/assets/seed/users.json`; Normalization
+of its malformed records happens once, on first start, into the runtime
+store under `data/`.
 
 ## Theme and layout
 

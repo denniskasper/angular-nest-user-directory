@@ -8,15 +8,21 @@ import { USER_ROLES } from './role';
  * Values that are present must be well-formed: Normalization repairs or
  * clears anything else before a record reaches the store.
  */
-export const storedUserSchema = z.object({
-  id: z.number().int(),
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.email().optional(),
-  phoneNumber: z.string().optional(),
-  birthDate: z.iso.date().optional(),
-  role: z.enum(USER_ROLES),
-});
+export const storedUserSchema = z
+  .object({
+    id: z.number().int(),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.email().optional(),
+    phoneNumber: z.string().optional(),
+    birthDate: z.iso.date().optional(),
+    role: z.enum(USER_ROLES),
+  })
+  .meta({
+    id: 'User',
+    description:
+      'A User as stored. email, phoneNumber and birthDate may be absent on a Legacy Record that entered as Seed Data, whatever its Role would require of a new User.',
+  });
 
 export type User = z.infer<typeof storedUserSchema>;
 

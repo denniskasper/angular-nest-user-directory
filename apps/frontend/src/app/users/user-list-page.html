@@ -5,8 +5,8 @@
     @if (shown(); as shown) {
     <p class="directory__count">
       <span class="directory__figure">{{ shown.total }}</span>
-      @if (term()) { {{ shown.total === 1 ? 'match' : 'matches' }} } @else {
-      Users }
+      @if (shownTerm()) { {{ shown.total === 1 ? 'match' : 'matches' }} } @else
+      { Users }
     </p>
     }
     <search class="search">
@@ -18,7 +18,7 @@
         type="search"
         autocomplete="off"
         spellcheck="false"
-        placeholder="Type any part of a name…"
+        placeholder="Type any part of a Full Name…"
         (input)="onTyped(searchField.value)"
       />
     </search>
@@ -37,11 +37,11 @@
   </p>
   } @else if (shown(); as shown) { @if (shown.items.length === 0) {
   <p class="state" role="status">
-    @if (term()) { No User’s Full Name contains “{{ term() }}”. } @else { There
-    are no Users on this page. }
+    @if (shownTerm()) { No User’s Full Name contains “{{ shownTerm() }}”. }
+    @else { There are no Users on this page. }
   </p>
   } @else {
-  <div class="directory__body" #body [attr.aria-busy]="users.isLoading()">
+  <div class="directory__body" #list [attr.aria-busy]="users.isLoading()">
     <!-- Phone: one stacked entry per User. -->
     <ul class="entries" aria-label="Users">
       @for (user of shown.items; track user.id; let i = $index) {

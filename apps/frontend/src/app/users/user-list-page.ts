@@ -14,7 +14,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { fullName, UserPage } from '@pdr-cloud/shared';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { debounceTime, Subject } from 'rxjs';
 
 /**
  * The directory: a page of Users, searchable by Full Name, readable at any
@@ -70,6 +70,14 @@ export class UserListPage {
     source: () => (this.users.hasValue() ? this.users.value() : undefined),
     computation: (next, previous) => next ?? previous?.value,
   });
+  /**
+   * The search the shown page answers, held with it: the count is labelled
+   * for the page on screen, never for a term whose page has not arrived.
+   */
+  protected readonly shownTerm = linkedSignal<string | undefined, string>({
+    source: () => (this.users.hasValue() ? this.term() : undefined),
+    computation: (next, previous) => next ?? previous?.value ?? '',
+  });
   protected readonly pageCount = computed(() => {
     const shown = this.shown();
     return shown ? Math.max(1, Math.ceil(shown.total / shown.pageSize)) : 1;
@@ -88,34 +96,38 @@ export class UserListPage {
   private readonly router = inject(Router);
   private readonly searchField =
     viewChild.required<ElementRef<HTMLInputElement>>('searchField');
-  private readonly body = viewChild<ElementRef<HTMLElement>>('body');
+  private readonly list = viewChild<ElementRef<HTMLElement>>('list');
   private readonly typed = new Subject<string>();
+  /** Keystrokes have landed in the field that no search has yet been made of. */
+  private typing = false;
 
   constructor() {
     // Typing becomes a search once it settles. Each search replaces the URL
-    // rather than pushing one, so Back steps over the typing, not through it;
-    // and a new search starts again from the first page.
+    // rather than pushing one, so typing does not stack history entries; and
+    // a new search starts again from the first page.
     this.typed
-      .pipe(debounceTime(250), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((term) =>
+      .pipe(debounceTime(250), takeUntilDestroyed())
+      .subscribe((term) => {
+        this.typing = false;
         this.router.navigate([], {
           queryParams: { search: term || null, page: null },
           queryParamsHandling: 'merge',
           replaceUrl: true,
-        }),
-      );
+        });
+      });
 
-    // The URL is the source of the search term except while it is being
-    // typed: then the field is, and a settled search landing in the URL must
-    // not overwrite what has been typed since.
+    // The URL is the source of the search term — on first load, and when
+    // Back or Forward changes it — except while typing is still settling:
+    // then a search landing in the URL must not overwrite what has been
+    // typed since it was made.
     effect(() => {
-      const field = this.searchField().nativeElement;
       const term = this.search() ?? '';
-      if (document.activeElement !== field) field.value = term;
+      if (!this.typing) this.searchField().nativeElement.value = term;
     });
   }
 
   protected onTyped(term: string): void {
+    this.typing = true;
     this.typed.next(term);
   }
 
@@ -125,9 +137,9 @@ export class UserListPage {
       queryParams: { page: page === 1 ? null : page },
       queryParamsHandling: 'merge',
     });
-    const body = this.body()?.nativeElement;
-    if (body && body.getBoundingClientRect().top < 0) {
-      body.scrollIntoView({ block: 'start' });
+    const list = this.list()?.nativeElement;
+    if (list && list.getBoundingClientRect().top < 0) {
+      list.scrollIntoView({ block: 'start' });
     }
   }
 }

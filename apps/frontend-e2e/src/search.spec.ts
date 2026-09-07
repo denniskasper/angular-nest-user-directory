@@ -1,26 +1,17 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { presentation } from './presentation';
 
 /**
  * Seam 3 (spec.md, Testing Decisions): the browser. Covers ticket 06 —
  * search narrows the results — at both the phone and desktop projects.
  */
 
-/** The Users shown in whichever presentation the current viewport uses. */
-function entries(page: Page) {
-  return test.info().project.name === 'phone'
-    ? page.getByRole('list', { name: 'Users' }).getByRole('listitem')
-    : page
-        .getByRole('table', { name: 'Users' })
-        .locator('tbody')
-        .getByRole('row');
-}
-
 test.describe('search', () => {
   test('narrows the directory by Full Name and pages the matches', async ({
     page,
   }) => {
     await page.goto('/');
-    const shown = entries(page);
+    const { entries: shown } = presentation(page);
     const search = page.getByRole('searchbox', { name: 'Search by Full Name' });
     const pager = page.getByRole('navigation', { name: 'Pagination' });
     await expect(shown).toHaveCount(25);
@@ -63,17 +54,28 @@ test.describe('search', () => {
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByText('100 Users')).toBeVisible();
     await expect(shown).toHaveCount(25);
-  });
 
-  test('reproduces a search and page from the URL', async ({ page }) => {
+    // Back returns to an earlier search, and the field — still focused from
+    // typing — follows the URL rather than keeping what was last typed.
+    await page.goBack();
+    await expect(page).toHaveURL(/\?search=an$/);
+    await expect(search).toHaveValue('an');
+    await expect(page.getByText('29 matches')).toBeVisible();
+
+    // A URL reproduces a search and a page, and both survive opening and
+    // dismissing a User's detail from within them.
     await page.goto('/?search=an&page=2');
-
-    await expect(
-      page.getByRole('searchbox', { name: 'Search by Full Name' }),
-    ).toHaveValue('an');
-    await expect(entries(page)).toHaveCount(4);
-    await expect(
-      page.getByRole('navigation', { name: 'Pagination' }),
-    ).toContainText('Page 2 of 2');
+    await expect(search).toHaveValue('an');
+    await expect(shown).toHaveCount(4);
+    await expect(pager).toContainText('Page 2 of 2');
+    await shown.getByRole('link', { name: 'Ruben Chan' }).click();
+    await expect(page).toHaveURL(/\/users\/98\?search=an&page=2$/);
+    const dialog = page.getByRole('dialog', { name: 'Ruben Chan' });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/\?search=an&page=2$/);
+    await expect(search).toHaveValue('an');
+    await expect(shown).toHaveCount(4);
   });
 });

@@ -62,8 +62,10 @@ expect 'a repaired text id is fetched as a number' \
     "$(curl -sS "$BASE/api/users/74")" '"id":74'
 expect 'a missing User is a JSON 404' \
     "$(headers "$BASE/api/users/999999")" 'content-type: application/json'
+# The status line names the protocol version, HTTP/1.1 locally and HTTP/2
+# behind Dokploy, so only the status code is matched.
 expect 'the API documentation is served' \
-    "$(headers "$BASE/api/docs")" 'http/1.1 200'
+    "$(headers "$BASE/api/docs" | head -1)" ' 200'
 
 # The root serves the application, not a directory listing or a 404.
 root="$(curl -sS "$BASE/")"

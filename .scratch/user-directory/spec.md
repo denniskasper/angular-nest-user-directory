@@ -1,6 +1,6 @@
 # Spec: User Directory
 
-Status: done
+Status: ready-for-agent
 
 ## Problem Statement
 

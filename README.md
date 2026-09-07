@@ -36,6 +36,14 @@ npm run start:api        # http://localhost:3000/api
 npm run start:frontend   # http://localhost:4200 (proxies /api to the API)
 ```
 
+To try it on a phone, start both with the frontend bound to every
+interface, then open `http://<this machine's LAN address>:4200` on the
+phone. The API stays on localhost; the frontend proxies `/api` to it.
+
+```sh
+npm run start:lan
+```
+
 ## Check
 
 ```sh

@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "nx run-many -t serve -p api frontend",
+    "start:lan": "nx run-many -t serve -p api frontend -c lan",
     "start:api": "nx serve api",
     "start:frontend": "nx serve frontend",
     "build": "nx run-many -t build",

@@ -6,8 +6,9 @@
  * The store is `$DATA_DIR/users.json`, `data/users.json` by default, the
  * same place the API reads it from (apps/api/src/app/users/users-store-path.ts).
  * Only the store and any temporary file an interrupted write left beside it
- * are removed; the directory itself and anything else in it are kept, and
- * the Seed Data asset is never touched.
+ * (`users.json.<pid>.tmp`, as FileUsersRepository names them) are removed;
+ * the directory itself and anything else in it are kept, and the Seed Data
+ * asset is never touched.
  *
  * Usage: `npm run reset`, or `DATA_DIR=somewhere npm run reset`.
  */
@@ -27,8 +28,10 @@ try {
   entries = [];
 }
 
+const isInterruptedWrite = (name) =>
+  name.startsWith(`${STORE_FILE}.`) && name.endsWith('.tmp');
 const removable = entries.filter(
-  (name) => name === STORE_FILE || name.startsWith(`${STORE_FILE}.`),
+  (name) => name === STORE_FILE || isInterruptedWrite(name),
 );
 
 if (removable.length === 0) {

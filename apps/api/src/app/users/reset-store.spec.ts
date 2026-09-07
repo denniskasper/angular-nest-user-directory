@@ -29,9 +29,10 @@ async function reset(dataDir: string) {
 
 /**
  * Seam 2 (spec.md, Testing Decisions): the reset script is proved through
- * the application that starts after it, not by inspecting the file it
- * removes. After a reset, the next start runs Normalization from the Seed
- * Data again and whatever was created before is gone.
+ * the application that starts after it. After a reset, the next start runs
+ * Normalization from the Seed Data again and whatever was created before is
+ * gone. The one file probe is for a stray temporary file, which no start
+ * would ever reveal.
  */
 describe('Resetting the store', () => {
   let booted: BootedApp;
@@ -61,11 +62,12 @@ describe('Resetting the store', () => {
     await booted.app.close();
 
     const { stdout } = await reset(booted.dataDir);
+    expect(stdout).toContain(join(booted.dataDir, 'users.json'));
+
     const log = vi.spyOn(Logger.prototype, 'log');
     try {
       await booted.restart();
 
-      expect(stdout).toContain(join(booted.dataDir, 'users.json'));
       const users = await listUsers();
       expect(users).toHaveLength(100);
       expect(users.find((u) => u.id === created.body.id)).toBe(undefined);
@@ -79,24 +81,25 @@ describe('Resetting the store', () => {
     }
   });
 
-  it('removes a temporary file an interrupted write left behind', async () => {
+  it('removes a temporary file an interrupted write left behind, and nothing else', async () => {
     const stray = join(booted.dataDir, 'users.json.12345.tmp');
+    const unrelated = join(booted.dataDir, 'users.json.bak');
     await writeFile(stray, '[', 'utf8');
+    await writeFile(unrelated, '[]', 'utf8');
     await booted.app.close();
 
     await reset(booted.dataDir);
 
     await expect(access(stray)).rejects.toMatchObject({ code: 'ENOENT' });
-    await booted.restart();
-    expect(await listUsers()).toHaveLength(100);
+    await expect(access(unrelated)).resolves.toBeUndefined();
   });
 
-  it('succeeds and says so when there is nothing to remove', async () => {
+  it('succeeds, naming the store, when there is nothing to remove', async () => {
     await booted.app.close();
     await reset(booted.dataDir);
 
     const { stdout } = await reset(booted.dataDir);
 
-    expect(stdout.toLowerCase()).toContain('nothing to remove');
+    expect(stdout).toContain(join(booted.dataDir, 'users.json'));
   });
 });

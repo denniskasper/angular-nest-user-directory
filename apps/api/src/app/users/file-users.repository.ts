@@ -94,7 +94,11 @@ export class FileUsersRepository
     }
   }
 
-  /** Writes to a temporary file and moves it into place, so an interrupted write never leaves a partial store. */
+  /**
+   * Writes to a temporary file and moves it into place, so an interrupted
+   * write never leaves a partial store. `tools/reset-store.mjs` removes any
+   * temporary file left behind by this name.
+   */
   private async writeStore(users: readonly User[]): Promise<void> {
     await mkdir(dirname(this.storePath), { recursive: true });
     const temporary = `${this.storePath}.${process.pid}.tmp`;

@@ -114,7 +114,8 @@ npm run build
 
 The browser tests start their own API against a store under `tmp/e2e/`, so
 they neither read nor write `data/`. The HTTP-level tests boot the whole
-application against a store in a fresh temporary directory per suite.
+application against a store in a fresh temporary directory, per suite or
+per test.
 
 ## API
 
@@ -139,11 +140,11 @@ In brief:
 
 The Seed Data is malformed on purpose, and how it is handled is the
 judgement call this challenge is really testing. Read naively, it either
-shows broken rows or silently loses people.
+shows broken rows or silently loses Users.
 
 ### What was wrong
 
-Of the 100 records, 13 do not satisfy the rules a new User must meet today:
+Of the 100 records, 13 carry a defect:
 
 | Records   | Defect                                                     |
 | --------- | ---------------------------------------------------------- |
@@ -168,21 +169,21 @@ never drop a record.** All 100 Users appear in the directory.
   unknown. The Users themselves stay; the field reads as absent in the detail
   view and the API omits it.
 - **Left alone.** User 25 has no email; nothing is renamed or cleared, the
-  record is stored as it came. User 5's phone number is the literal string
-  `invalid-number`; no phone format is specified anywhere, the schema accepts
-  any non-empty string, so it is kept verbatim rather than second-guessed.
-  Many viewers have no phone number and many editors no birth date, which is
-  exactly what their Role allows.
+  record is stored as it came. User 5's phoneNumber is the literal string
+  `invalid-number`; no phoneNumber format is specified anywhere, the schema
+  accepts any non-empty string, so it is kept verbatim rather than
+  second-guessed. Many viewers have no phoneNumber and many editors no
+  birthDate, which is exactly what their Role allows.
 
-So 13 records are out of step with today's rules, and Normalization touches
-12 of them. The startup report lists each by id with what was renamed,
+So 13 records carry a defect and Normalization touches 12 of them; User 25
+needs nothing done. The startup report lists each by id with what was renamed,
 converted or cleared, including the value that was cleared, so the repairs
 are visible rather than silent.
 
 ### Why it looks deliberate
 
-The three records with `birthDtae` are all admins that otherwise hold a phone
-number. Correcting the field name is exactly what makes them satisfy the admin
+The three records with `birthDtae` are all admins that otherwise hold a
+phoneNumber. Correcting the field name is exactly what makes them satisfy the admin
 rule. Left uncorrected, they are the only three records in the entire file
 that violate the Conditional Requirement. An implementation that validates
 the Seed Data strictly reports three invalid admins; one that repairs first
@@ -200,9 +201,10 @@ schemas for the same entity:
   legitimately already exist: `email`, `phoneNumber` and `birthDate` may be
   absent on a Legacy Record.
 
-Rejecting Legacy Records under the creation rules would drop 13 people from
-the directory over a formatting defect, which is what the tolerant read is
-there to prevent. Consumers of a stored User treat those three fields as
+Rejecting Legacy Records under the creation rules would drop eleven Users
+from the directory over a formatting defect, and would let the two text ids
+through unrepaired, since the creation rules never see an id. The tolerant
+read, after Normalization, is there to prevent both. Consumers of a stored User treat those three fields as
 optional.
 
 ## Decisions
@@ -284,8 +286,8 @@ normalizer are not tested in isolation; their behaviour is proved above them.
 
 - The Seed Data's field-name misspellings and text ids are defects of
   transcription, not intent, so correcting them is safe.
-- No phone number format is specified, so any non-empty string is accepted
-  and stored numbers are not reformatted.
+- No phoneNumber format is specified, so any non-empty string is accepted
+  and stored values are not reformatted.
 - A birth date is an ISO calendar date (`YYYY-MM-DD`) with no time or zone.
 - Role is a validation selector only. It grants nothing, and there is no
   authentication or authorisation anywhere.

@@ -1,0 +1,22 @@
+// The four supported viewport ranges (spec.md, Responsive design), defined
+// once. Phone is the baseline and needs no query; the other three are
+// min-width thresholds, so wider layouts are always additive.
+//
+//   @use 'breakpoints' as bp;
+//   .thing { @include bp.up(tablet) { … } }
+@use 'sass:map';
+
+$breakpoints: (
+  tablet: 600px,
+  laptop: 1024px,
+  desktop: 1440px,
+);
+
+@mixin up($name) {
+  @if not map.has-key($breakpoints, $name) {
+    @error 'Unknown breakpoint `#{$name}`; expected tablet, laptop or desktop.';
+  }
+  @media (min-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}

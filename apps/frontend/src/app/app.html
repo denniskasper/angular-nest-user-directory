@@ -1,3 +1,40 @@
-<h1>User Directory</h1>
-<p>Roles: {{ roles.join(', ') }}</p>
-<router-outlet></router-outlet>
+<header class="appbar">
+  <div class="appbar__inner">
+    <a class="brand" routerLink="/" aria-label="User Directory home">
+      <span class="brand__mark" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </span>
+      <h1 class="brand__name"><em>User</em> Directory</h1>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a
+        routerLink="/"
+        routerLinkActive="nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="nav__link"
+        >Directory</a
+      >
+    </nav>
+  </div>
+  <span class="thread" aria-hidden="true"></span>
+</header>
+
+<main class="content">
+  <router-outlet />
+  <section class="welcome" aria-label="About the directory">
+    <p class="welcome__eyebrow">A register of Users</p>
+    <h2 class="welcome__title">Every User, by Role.</h2>
+    <ul class="welcome__roles">
+      @for (role of roles; track role) {
+      <li class="chip">{{ role }}</li>
+      }
+    </ul>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot__inner">
+    <span class="foot__mark" aria-hidden="true"></span>
+    <p class="foot__text">User Directory · Roles are {{ roles.join(', ') }}</p>
+  </div>
+</footer>

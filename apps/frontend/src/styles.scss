@@ -1,1 +1,128 @@
-/* You can add global styles to this file, and also import other style files */
+// Global styles: typefaces, the Material 3 theme generated from the brand
+// colours, and the handful of shell-level tokens every view shares.
+@use '@angular/material' as mat;
+@use 'theme-colors' as palette;
+@use 'brand';
+@use 'breakpoints' as bp;
+
+// Self-hosted variable fonts. Fraunces (a soft, optically-sized serif) is
+// the brand voice for headings; Instrument Sans carries everything else.
+@use '@fontsource-variable/fraunces/opsz.css';
+@use '@fontsource-variable/instrument-sans';
+
+html {
+  // `color-scheme` is the whole light/dark mechanism: with theme-type
+  // `color-scheme` Material emits every system colour as light-dark(), and
+  // the browser picks the side that matches the user's preference.
+  color-scheme: light dark;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: palette.$primary-palette,
+        tertiary: palette.$tertiary-palette,
+        theme-type: color-scheme,
+      ),
+      typography: (
+        plain-family: 'Instrument Sans Variable',
+        brand-family: 'Fraunces Variable',
+        bold-weight: 700,
+        medium-weight: 600,
+        regular-weight: 400,
+      ),
+      density: 0,
+    )
+  );
+
+  @include brand.custom-properties;
+
+  // Shell rhythm. Phone values are the baseline; wider viewports add to them.
+  --shell-gutter: 1rem;
+  --shell-max-width: 72rem;
+  --shell-bar-height: 3.5rem;
+  --touch-target: 2.75rem; // 44px, the accepted minimum for a fingertip
+
+  @include bp.up(tablet) {
+    --shell-gutter: 1.5rem;
+    --shell-bar-height: 4rem;
+  }
+  @include bp.up(laptop) {
+    --shell-gutter: 2rem;
+  }
+  @include bp.up(desktop) {
+    --shell-gutter: 2.5rem;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-large);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  // Atmosphere: a wash of the three chromatic brand colours pooled at the
+  // top of the page, faint enough to read as light on paper rather than as
+  // decoration. It sits on the surface colour so it works in both schemes.
+  background-image:
+    radial-gradient(
+      60rem 28rem at 8% -6rem,
+      color-mix(in oklab, var(--brand-primary) 16%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      44rem 22rem at 78% -4rem,
+      color-mix(in oklab, var(--brand-secondary) 13%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      30rem 16rem at 55% 2rem,
+      color-mix(in oklab, var(--brand-tertiary) 10%, transparent),
+      transparent 70%
+    );
+  background-repeat: no-repeat;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Fraunces Variable', serif;
+  font-variation-settings:
+    'opsz' 72,
+    'SOFT' 40;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+a {
+  color: var(--mat-sys-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+  border-radius: var(--mat-sys-corner-extra-small);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,16 @@
+// The four brand colours exactly as specified. The Material palettes in
+// _theme-colors.scss are *derived* from these (tonal ramps for surfaces,
+// containers and text) and do not contain the literal values, so anything
+// that must show the brand colour itself — the mark, the thread, focus
+// rings — uses these custom properties rather than a system token.
+$primary: #1da4e8;
+$secondary: #20d2a8;
+$tertiary: #e4dc46;
+$error: #d32f55;
+
+@mixin custom-properties {
+  --brand-primary: #{$primary};
+  --brand-secondary: #{$secondary};
+  --brand-tertiary: #{$tertiary};
+  --brand-error: #{$error};
+}

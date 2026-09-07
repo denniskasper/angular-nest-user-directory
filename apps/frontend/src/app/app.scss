@@ -1,0 +1,255 @@
+@use 'breakpoints' as bp;
+
+$ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+
+// The shell's single column: full width with gutters on phones, held at a
+// reading width and centred once the viewport is wider than that.
+@mixin column {
+  width: 100%;
+  max-width: var(--shell-max-width);
+  margin-inline: auto;
+  padding-inline: var(--shell-gutter);
+}
+
+// ---------------------------------------------------------------- shell ---
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.content {
+  @include column;
+  flex: 1;
+  padding-block: var(--shell-gutter);
+
+  @include bp.up(laptop) {
+    padding-block: calc(var(--shell-gutter) * 1.5);
+  }
+}
+
+// --------------------------------------------------------------- appbar ---
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in oklab, var(--mat-sys-surface) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+
+.appbar__inner {
+  @include column;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: var(--shell-bar-height);
+}
+
+// The brand thread: a rule woven from the four brand colours, drawn in on
+// load. It is the one motif every page carries.
+.thread {
+  display: block;
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--brand-primary) 0 42%,
+    var(--brand-secondary) 42% 70%,
+    var(--brand-tertiary) 70% 90%,
+    var(--brand-error) 90% 100%
+  );
+  transform-origin: left;
+  animation: draw 900ms $ease both;
+}
+
+// ---------------------------------------------------------------- brand ---
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: var(--touch-target);
+  color: inherit;
+  text-decoration: none;
+  animation: rise 600ms 120ms $ease both;
+}
+
+// A 2×2 signet of the four brand colours.
+.brand__mark {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  width: 1.5rem;
+  aspect-ratio: 1;
+  padding: 2px;
+  border-radius: 0.4rem;
+  background: var(--mat-sys-on-surface);
+  transition: transform 300ms $ease;
+
+  span {
+    border-radius: 2px;
+    &:nth-child(1) {
+      background: var(--brand-primary);
+    }
+    &:nth-child(2) {
+      background: var(--brand-secondary);
+    }
+    &:nth-child(3) {
+      background: var(--brand-error);
+    }
+    &:nth-child(4) {
+      background: var(--brand-tertiary);
+    }
+  }
+}
+
+.brand:hover .brand__mark {
+  transform: rotate(-8deg) scale(1.06);
+}
+
+.brand__name {
+  font-size: 1.25rem;
+  line-height: 1;
+  white-space: nowrap;
+
+  em {
+    font-style: italic;
+    font-variation-settings:
+      'opsz' 72,
+      'SOFT' 100,
+      'WONK' 1;
+    color: var(--mat-sys-primary);
+  }
+
+  @include bp.up(tablet) {
+    font-size: 1.5rem;
+  }
+}
+
+// ------------------------------------------------------------------ nav ---
+.nav {
+  display: flex;
+  gap: 0.25rem;
+  animation: rise 600ms 220ms $ease both;
+}
+
+.nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding-inline: 0.875rem;
+  border-radius: var(--mat-sys-corner-full);
+  font: var(--mat-sys-label-large);
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+  text-decoration: none;
+  transition:
+    background-color 200ms,
+    color 200ms;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+.nav__link--active {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+// -------------------------------------------------------------- welcome ---
+// Placeholder landing content until the directory list lands.
+.welcome {
+  padding-block: 2rem 1rem;
+  animation: rise 700ms 320ms $ease both;
+
+  @include bp.up(tablet) {
+    padding-block: 3.5rem 2rem;
+  }
+}
+
+.welcome__eyebrow {
+  margin: 0 0 0.75rem;
+  font: var(--mat-sys-label-large);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mat-sys-secondary);
+}
+
+.welcome__title {
+  font-size: clamp(2.25rem, 4vw + 1rem, 4.5rem);
+  line-height: 1.02;
+  max-width: 14ch;
+  text-wrap: balance;
+}
+
+.welcome__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding-inline: 1rem;
+  border-radius: var(--mat-sys-corner-full);
+  background: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-label-large);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+// ----------------------------------------------------------------- foot ---
+.foot {
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-low);
+}
+
+.foot__inner {
+  @include column;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 1rem;
+}
+
+.foot__mark {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--brand-tertiary);
+  flex: none;
+}
+
+.foot__text {
+  margin: 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// -------------------------------------------------------------- motion ---
+@keyframes draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -5,7 +5,7 @@ An Nx monorepo holding an Angular frontend, a NestJS API and a shared module
 that both consume.
 
 ```
-apps/frontend   Angular 22, zoneless
+apps/frontend   Angular 22 + Angular Material, zoneless
 apps/api        NestJS 12
 libs/shared     the module both applications consume (Role vocabulary so far)
 ```
@@ -45,6 +45,22 @@ npm test            # unit and HTTP-level tests (vitest)
 npm run e2e         # browser tests (Playwright, needs `npx playwright install chromium`)
 npm run build
 ```
+
+## Theme and layout
+
+The Material 3 theme is generated from the four brand colours with
+`@angular/material:theme-color`; the tonal palettes live in
+`apps/frontend/src/styles/_theme-colors.scss` and are applied once in
+`styles.scss`. The literal brand hexes are exposed as `--brand-*` custom
+properties (`_brand.scss`) for the places that must show the colour itself.
+Light and dark appearance follow the system preference through
+`color-scheme: light dark`; there is no toggle.
+
+Breakpoints (tablet, laptop, desktop; phone is the baseline) are defined
+once in `apps/frontend/src/styles/_breakpoints.scss` and consumed with
+`@use 'breakpoints' as bp; @include bp.up(tablet) { … }`. Fonts (Fraunces,
+Instrument Sans) are self-hosted from `@fontsource-variable`, so nothing
+loads from a third party.
 
 ## Notes
 

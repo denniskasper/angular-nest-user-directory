@@ -1,9 +1,14 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { USER_ROLES } from '@pdr-cloud/shared';
 
+/**
+ * The application shell: brand header, navigation, the content column every
+ * routed view renders inside, and a footer. Layout is mobile-first — see
+ * app.scss and styles/_breakpoints.scss.
+ */
 @Component({
-  imports: [RouterModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',

@@ -40,7 +40,7 @@ html {
   // Shell rhythm. Phone values are the baseline; wider viewports add to them.
   --shell-gutter: 1rem;
   --shell-max-width: 72rem;
-  --shell-bar-height: 3.5rem;
+  --shell-bar-height: 6rem; // two rows: brand, then nav
   --touch-target: 2.75rem; // 44px, the accepted minimum for a fingertip
 
   @include bp.up(tablet) {

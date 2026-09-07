@@ -9,6 +9,11 @@ export const appRoutes: Route[] = [
       import('./users/create-user-page').then((m) => m.CreateUserPage),
   },
   {
+    path: 'smiley',
+    loadComponent: () =>
+      import('./smiley/smiley-page').then((m) => m.SmileyPage),
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./users/user-list-page').then((m) => m.UserListPage),

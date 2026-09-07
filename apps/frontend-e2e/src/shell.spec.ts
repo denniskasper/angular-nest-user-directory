@@ -110,3 +110,101 @@ test.describe('app shell', () => {
     expect(scrollWidth).toBeLessThanOrEqual(viewport.width);
   });
 });
+
+test.describe('smiley', () => {
+  /**
+   * Everything a smiley drawn from layout alone must not contain: anything
+   * pinned out of flow, any image or vector element, any asset painted in.
+   */
+  function materials(page: Page) {
+    return page.getByRole('main').evaluate((main) => {
+      const pinned: string[] = [];
+      const assets: string[] = [];
+      const painted: string[] = [];
+      for (const el of [main, ...main.querySelectorAll('*')]) {
+        const tag = el.tagName.toLowerCase();
+        if (
+          [
+            'img',
+            'svg',
+            'picture',
+            'canvas',
+            'object',
+            'embed',
+            'video',
+          ].includes(tag)
+        ) {
+          assets.push(tag);
+        }
+        for (const pseudo of [null, '::before', '::after']) {
+          const s = getComputedStyle(el, pseudo);
+          if (pseudo && s.content === 'none') continue;
+          if (['absolute', 'fixed', 'sticky'].includes(s.position)) {
+            pinned.push(`${tag}${pseudo ?? ''}: ${s.position}`);
+          }
+          for (const v of [s.backgroundImage, s.maskImage, s.content]) {
+            if (v.includes('url(')) painted.push(`${tag}${pseudo ?? ''}: ${v}`);
+          }
+        }
+      }
+      return { pinned, assets, painted };
+    });
+  }
+
+  test('is drawn from layout alone, in the brand colours, and scales with the viewport', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page
+      .getByRole('navigation')
+      .getByRole('link', { name: 'Smiley' })
+      .click();
+    await expect(page).toHaveURL(/\/smiley$/);
+
+    const face = page.getByRole('img', { name: 'A smiling face' });
+    await expect(face).toBeVisible();
+
+    // Layout primitives only: nothing pinned, no image, no vector.
+    expect(await materials(page)).toEqual({
+      pinned: [],
+      assets: [],
+      painted: [],
+    });
+
+    // Part of the theme: the face is the brand tertiary itself, and the page
+    // still paints every brand colour around it.
+    expect(
+      await face.evaluate((el) => getComputedStyle(el).backgroundColor),
+    ).toBe(BRAND_COLOURS.tertiary);
+    const rendered = await renderedColours(page);
+    for (const [name, value] of Object.entries(BRAND_COLOURS)) {
+      expect(rendered, `${name} ${value} should be painted`).toContain(value);
+    }
+
+    // Scales with the viewport: round, within the screen, and larger on a
+    // large desktop than on the narrowest common phone.
+    async function measure() {
+      const viewport = page.viewportSize();
+      const box = await face.boundingBox();
+      if (!viewport || !box) throw new Error('viewport and face must exist');
+      expect(box.width).toBeCloseTo(box.height, 0);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      expect(box.width).toBeGreaterThanOrEqual(
+        Math.min(viewport.width, viewport.height) * 0.5,
+      );
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(viewport.width);
+      return box.width;
+    }
+
+    const asLoaded = await measure();
+    await page.setViewportSize({ width: 320, height: 568 });
+    const narrowest = await measure();
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const largest = await measure();
+    expect(narrowest).toBeLessThan(asLoaded);
+    expect(largest).toBeGreaterThan(asLoaded);
+  });
+});

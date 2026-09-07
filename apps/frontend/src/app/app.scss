@@ -39,13 +39,21 @@ $ease: motion.$ease;
   backdrop-filter: blur(14px) saturate(1.4);
 }
 
+// Phone baseline: two rows, the brand above the nav, since three links do
+// not fit beside the name. From tablet up they share one row.
 .appbar__inner {
   @include column;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  align-content: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0 1rem;
   min-height: var(--shell-bar-height);
+
+  @include bp.up(tablet) {
+    flex-wrap: nowrap;
+  }
 }
 
 // The brand thread, drawn in on load. It is the one motif every page carries.
@@ -124,7 +132,15 @@ $ease: motion.$ease;
 .nav {
   display: flex;
   gap: 0.25rem;
+  // Its own row on phones, the link text flush with the brand mark.
+  flex-basis: 100%;
+  margin-inline-start: -0.875rem;
   animation: rise 600ms 220ms $ease both;
+
+  @include bp.up(tablet) {
+    flex-basis: auto;
+    margin-inline-start: 0;
+  }
 }
 
 .nav__link {
